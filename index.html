@@ -414,6 +414,12 @@
     overflow-wrap:anywhere;
     text-shadow: 0 12px 26px rgba(0,0,0,.36);
   }
+  
+  @media (max-width: 390px){
+    .action-bar{ grid-template-columns: 1fr 105px 1fr; }
+    .right-actions{ grid-template-columns: 48px 48px 48px; gap: 6px; }
+    #subBtn{ width: 48px; }
+  }
 
   /* ===== TABLE ===== */
   #logWrap{ margin-top: 6px; width:100%; }
