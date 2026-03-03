@@ -230,7 +230,7 @@
   /* ===== ACTION BAR ===== */
   .action-bar{
     display:grid;
-    grid-template-columns: 1fr 140px 1fr;
+    grid-template-columns: 1fr 140px 1fr; /* links, play, rechts */
     gap: 10px;
     align-items: stretch;
     margin-bottom: 12px;
@@ -287,8 +287,9 @@
 
   .right-actions{
     display:grid;
-    grid-template-columns: 1fr 52px 52px;
+    grid-template-columns: 52px 52px 52px; /* wissel, geel, rood */
     gap: 8px;
+    justify-content: end;  /* duw naar rechts binnen de 1fr kolom */
     align-items: stretch;
   }
   #subBtn{
@@ -616,7 +617,7 @@
   <div class="action-bar">
     <button id="newMatchBtn">
       <img src="reset.svg" alt="" class="btn-icon">
-      <span class="btn-text">Reset wedstrijd<small>nieuwe teams / reset log</small></span>
+      <span class="btn-text"><small>Reset wedstrijd</small></span>
     </button>
 
     <button id="startPauseBtn" aria-label="Start of pauze">▶</button>
