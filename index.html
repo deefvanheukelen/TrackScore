@@ -7,416 +7,242 @@
   <meta name="theme-color" content="#0B1220" />
   <title>TrackScore Suite</title>
 
+  <!-- PWA -->
   <link rel="manifest" href="./manifest.webmanifest">
 
+  <!-- Favicons -->
   <link rel="icon" type="image/png" sizes="32x32" href="./img/icoon.png">
   <link rel="apple-touch-icon" href="./img/icoon.png">
 
+  <!-- iOS PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="TrackScore">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <style>
-    :root{
-      --bg0:#070B14;
-      --bg1:#0B1220;
-      --text:#EAF0FF;
-      --muted:#A9B4D0;
-      --muted2:#7E8AA8;
-      --cyan:#22D3EE;
-      --green:#22C55E;
-      --r18:18px;
-      --r22:22px;
-      --w-regular:500;
-      --w-medium:600;
-      --w-semi:700;
-      --w-bold:800;
-      --module-max:250px;
-      --module-radius:22px;
-    }
+<style>
 
-    *{ box-sizing:border-box; }
-    html, body{ height:100%; }
+:root{
+  --bg0:#070B14;
+  --bg1:#0B1220;
+  --text:#EAF0FF;
+  --muted:#A9B4D0;
+  --muted2:#7E8AA8;
+  --module-radius:22px;
+}
 
-    body{
-      margin:0;
-      min-height:100%;
-      font-family: Manrope, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      letter-spacing:-0.01em;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 50% -10%, rgba(34,211,238,.18), transparent 60%),
-        radial-gradient(900px 500px at 90% 15%, rgba(34,197,94,.14), transparent 55%),
-        radial-gradient(700px 420px at 10% 20%, rgba(28,78,216,.16), transparent 55%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
-      -webkit-text-size-adjust:100%;
-      -webkit-tap-highlight-color:transparent;
-      overscroll-behavior:none;
-      overflow-x:hidden;
-    }
+*{box-sizing:border-box;}
 
-    .app{
-      min-height:100dvh;
-      display:flex;
-      flex-direction:column;
-      padding:
-        env(safe-area-inset-top)
-        env(safe-area-inset-right)
-        0
-        env(safe-area-inset-left);
-    }
+body{
+  margin:0;
+  font-family:Manrope,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(34,211,238,.18), transparent 60%),
+    radial-gradient(900px 500px at 90% 15%, rgba(34,197,94,.14), transparent 55%),
+    radial-gradient(700px 420px at 10% 20%, rgba(28,78,216,.16), transparent 55%),
+    linear-gradient(180deg,var(--bg0),var(--bg1));
+}
 
-    .container{
-      width:100%;
-      max-width:960px;
-      margin:0 auto;
-      padding:10px 12px;
-      min-width:0;
-    }
+.container{
+  width:100%;
+  max-width:960px;
+  margin:auto;
+  padding:12px;
+}
 
-    img, svg{
-      max-width:100%;
-      height:auto;
-      display:block;
-    }
+.brandbar{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:8px;
+}
 
-    .brandbar{
-      margin:0 auto 6px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      user-select:none;
-      min-width:0;
-    }
+.brandiconImg{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+}
 
-    .brandiconImg{
-      width:34px;
-      height:34px;
-      border-radius:10px;
-      object-fit:cover;
-      box-shadow:0 14px 26px rgba(0,0,0,.35);
-      flex:0 0 auto;
-    }
+.brandlogoImg{
+  height:28px;
+}
 
-    .brandlogoImg{
-      height:28px;
-      width:auto;
-      filter:drop-shadow(0 10px 18px rgba(0,0,0,.35));
-      flex:0 1 auto;
-      min-width:0;
-    }
+.installRow{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:12px;
+}
 
-    .installRow{
-      margin:0 auto 12px;
-      display:flex;
-      justify-content:flex-end;
-      min-width:0;
-    }
+#installBtn{
+  display:none;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:white;
+  cursor:pointer;
+}
 
-    #installBtn{
-      display:none;
-      align-items:center;
-      gap:8px;
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.06);
-      color:var(--text);
-      font-weight:var(--w-medium);
-      box-shadow:0 12px 26px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.10);
-      cursor:pointer;
-      touch-action:manipulation;
-    }
+.sectionLabel{
+  margin-bottom:10px;
+  color:var(--muted2);
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
 
-    #installBtn:active{ transform:translateY(1px); }
+/* GRID */
 
-    #installBtn svg{
-      width:18px;
-      height:18px;
-      opacity:.92;
-    }
+.moduleGrid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px;
+}
 
-    .homeWrap{
-      flex:0 0 auto;
-      overflow:visible;
-      padding-bottom:14px;
-      min-width:0;
-    }
+.moduleLink{
+  display:block;
+}
 
-    .sectionLabel{
-      margin:4px 2px 10px;
-      color:var(--muted2);
-      font-size:12px;
-      font-weight:var(--w-semi);
-      letter-spacing:.12em;
-      text-transform:uppercase;
-	  text-align: center;
-    }
+.moduleImage{
+  width:100%;
+  border-radius:var(--module-radius);
+  filter:
+    drop-shadow(0 14px 28px rgba(0,0,0,.42))
+    drop-shadow(0 8px 18px rgba(0,0,0,.24));
+}
 
-    .moduleGrid{
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0, var(--module-max)));
-      justify-content:center;
-      justify-items:center;
-      align-items:start;
-      gap:18px 20px;
-      width:100%;
-    }
+/* MOBILE */
 
-    .moduleLink{
-      display:block;
-      width:min(100%, var(--module-max));
-      text-decoration:none;
-      border-radius:var(--module-radius);
-      transition:transform .18s ease, filter .18s ease;
-      min-width:0;
-    }
+@media (max-width:760px){
 
-    .moduleLink:hover{
-      transform:translateY(-2px);
-      filter:brightness(1.03);
-    }
+  .moduleGrid{
+    grid-template-columns:1fr;
+    gap:0;
+  }
 
-    .moduleLink:active{
-      transform:translateY(1px);
-    }
+  .moduleImage{
+    width:96%;
+    margin:auto;
+  }
 
-    .moduleImageWrap{
-      position:relative;
-      width:100%;
-      max-width:var(--module-max);
-      margin:0 auto;
-      border-radius:var(--module-radius);
-      overflow:visible;
-      padding-inline:4px;
-    }
+  .moduleLink--soccer{
+    margin-bottom:-60px;
+  }
 
-    .moduleImage{
-      width:100%;
-      max-width:var(--module-max);
-      height:auto;
-      margin:0;
-      object-fit:contain;
-      filter:
-        drop-shadow(0 14px 28px rgba(0,0,0,.42))
-        drop-shadow(0 8px 18px rgba(0,0,0,.24));
-      transform-origin:center center;
-    }
+  .moduleLink--darts{
+    margin-top:-60px;
+  }
 
-    @media (max-width: 900px){
-      :root{
-        --module-max:230px;
-      }
-    }
+}
 
-    @media (max-width: 760px){
-      :root{
-        --module-max:220px;
-        --module-radius:20px;
-      }
-
-      .container{
-        max-width:560px;
-        padding:8px 10px;
-      }
-
-      .moduleGrid{
-        grid-template-columns:1fr;
-        gap:0;
-      }
-
-      .moduleLink{
-        width:100%;
-      }
-
-      .moduleImageWrap{
-        max-width:100%;
-        padding-inline:0;
-      }
-
-      .moduleImage{
-        width:96%;
-        max-width:none;
-        margin:0 auto;
-      }
-
-      /* Belangrijk:
-         als de PNG's veel transparante witruimte bevatten,
-         verkleint dit de zichtbare afstand op mobiel */
-      .moduleLink--soccer{
-        margin-bottom:-150px;
-      }
-
-      .moduleLink--darts{
-        margin-top:-18px;
-      }
-    }
-
-    @media (max-width: 480px){
-      .moduleImage{
-        width:98%;
-      }
-
-      .moduleLink--soccer{
-        margin-bottom:-80px;
-      }
-
-      .moduleLink--darts{
-        margin-top:-34px;
-      }
-    }
-
-    @media (max-width: 390px){
-      :root{
-        --module-radius:18px;
-      }
-
-      .brandlogoImg{
-        height:24px;
-      }
-
-      .sectionLabel{
-        margin-bottom:8px;
-      }
-
-      .moduleLink--soccer{
-        margin-bottom:-80px;
-      }
-
-      .moduleLink--darts{
-        margin-top:-46px;
-      }
-    }
-
-    @media (max-width: 320px){
-      .moduleLink--soccer{
-        margin-bottom:-54px;
-      }
-
-      .moduleLink--darts{
-        margin-top:-54px;
-      }
-    }
-  </style>
+</style>
 </head>
 
 <body>
-  <div class="app">
-    <div class="container">
-      <div class="brandbar" aria-label="TrackScore Suite">
-        <img class="brandiconImg" src="./img/icoon.png" alt="TrackScore icoon">
-        <img class="brandlogoImg" src="./img/logo.png" alt="TrackScore">
-      </div>
 
-      <div class="installRow">
-        <button id="installBtn" type="button" aria-label="Installeer app">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 3v10" stroke="white" stroke-opacity=".9" stroke-width="2" stroke-linecap="round"/>
-            <path d="M8 9l4 4 4-4" stroke="white" stroke-opacity=".9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" stroke="white" stroke-opacity=".9" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          Installeren
-        </button>
-      </div>
-    </div>
+<div class="container">
 
-    <div class="homeWrap">
-      <div class="container">
-        <div class="sectionLabel">Developed by: <strong>DEEF VANHEUKELEN</strong></div>
+<div class="brandbar">
+<img class="brandiconImg" src="./img/icoon.png">
+<img class="brandlogoImg" src="./img/logo.png">
+</div>
 
-        <div class="moduleGrid">
-          <a class="moduleLink moduleLink--soccer" href="./games/trackscore.html" aria-label="Open SoccerScore">
-            <div class="moduleImageWrap">
-              <img
-                class="moduleImage"
-                src="./img/soccerscore.png"
-                alt="SoccerScore module"
-                loading="eager"
-                decoding="async"
-              >
-            </div>
-          </a>
+<div class="installRow">
+<button id="installBtn">Installeren</button>
+</div>
 
-          <a class="moduleLink moduleLink--darts" href="./games/dartscore.html" aria-label="Open DartScore">
-            <div class="moduleImageWrap">
-              <img
-                class="moduleImage"
-                src="./img/dartscore.png"
-                alt="DartScore module"
-                loading="eager"
-                decoding="async"
-              >
-            </div>
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="sectionLabel">Score registratie</div>
 
-  <script>
-    const installBtn = document.getElementById("installBtn");
-    let deferredPrompt = null;
+<div class="moduleGrid">
 
-    function isIOS(){
-      return /iphone|ipad|ipod/i.test(navigator.userAgent);
-    }
+<a class="moduleLink moduleLink--soccer" href="./games/trackscore.html">
+<img class="moduleImage" src="./img/soccerscore.png">
+</a>
 
-    function isInStandaloneMode(){
-      return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
-    }
+<a class="moduleLink moduleLink--darts" href="./games/dartscore.html">
+<img class="moduleImage" src="./img/dartscore.png">
+</a>
 
-    function isSafari(){
-      return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    }
+</div>
 
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      if (!isInStandaloneMode() && installBtn){
-        installBtn.style.display = "inline-flex";
-      }
-    });
+</div>
 
-    installBtn?.addEventListener("click", async () => {
-      if (deferredPrompt){
-        deferredPrompt.prompt();
-        await deferredPrompt.userChoice.catch(() => null);
-        deferredPrompt = null;
-        installBtn.style.display = "none";
-        return;
-      }
+<script>
 
-      if (isIOS() && !isInStandaloneMode()){
-        alert("Tik in Safari op Deel en kies ‘Zet op beginscherm’.");
-      }
-    });
+const installBtn=document.getElementById("installBtn");
+let deferredPrompt=null;
 
-    window.addEventListener("appinstalled", () => {
-      if (installBtn) installBtn.style.display = "none";
-      deferredPrompt = null;
-    });
+function isIOS(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
 
-    window.addEventListener("load", () => {
-      if (isIOS() && isSafari() && !isInStandaloneMode() && installBtn){
-        installBtn.style.display = "inline-flex";
-      }
-    });
+function isAndroid(){
+  return /android/i.test(navigator.userAgent);
+}
 
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", async () => {
-        try{
-          const reg = await navigator.serviceWorker.register("./sw.js");
-          window.addEventListener("focus", () => reg.update().catch(() => {}));
-        }catch(e){
-          console.warn("Service worker registratie mislukt.", e);
-        }
-      });
-    }
-  </script>
+function isStandalone(){
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+}
+
+function showInstallButton(){
+  if(!isStandalone()){
+    installBtn.style.display="inline-flex";
+  }
+}
+
+window.addEventListener("beforeinstallprompt",(e)=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  showInstallButton();
+});
+
+installBtn.onclick=async()=>{
+
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt=null;
+    return;
+  }
+
+  if(isIOS()){
+    alert("Tik in Safari op Deel en kies ‘Zet op beginscherm’.");
+    return;
+  }
+
+  if(isAndroid()){
+    alert("Open het Chrome-menu en kies ‘App installeren’ of ‘Toevoegen aan startscherm’.");
+    return;
+  }
+
+};
+
+window.addEventListener("appinstalled",()=>{
+  installBtn.style.display="none";
+  deferredPrompt=null;
+});
+
+window.addEventListener("load",()=>{
+  if(!isStandalone() && (isIOS() || isAndroid())){
+    showInstallButton();
+  }
+});
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("./sw.js");
+  });
+}
+
+</script>
+
 </body>
 </html>
