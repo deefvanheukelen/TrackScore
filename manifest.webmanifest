@@ -1,18 +1,13 @@
 {
-  "name": "TrackScore",
+  "name": "TrackScore Suite",
   "short_name": "TrackScore",
-  "description": "Hou score en match-events bij en exporteer een rapport.",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0B1220",
   "theme_color": "#0B1220",
-  "orientation": "portrait",
   "icons": [
-  { "src": "img/icoon-192.png", "sizes": "192x192", "type": "image/png" },
-  { "src": "img/icoon-512.png", "sizes": "512x512", "type": "image/png" },
-
-  { "src": "img/icoon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-  { "src": "img/icoon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-]
+    { "src": "img/icoon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/icoon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
 }

@@ -1,1646 +1,452 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="description" content="TrackScore – hou score en match-events bij en exporteer een rapport." />
-<meta name="theme-color" content="#0B1220" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="TrackScore Suite – kies je spel en hou scores bij." />
+  <meta name="theme-color" content="#0B1220" />
+  <title>TrackScore Suite</title>
 
-<title>TrackScore</title>
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest">
 
-<!-- PWA -->
-<link rel="manifest" href="./manifest.webmanifest">
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="img/icoon-192.png">
+  <link rel="apple-touch-icon" href="img/icoon-192.png">
 
-<!-- Favicons -->
-<link rel="icon" type="image/png" sizes="32x32" href="img/icoon-192.png">
-<link rel="apple-touch-icon" href="img/icoon-192.png">
+  <!-- iOS PWA (Safari) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="TrackScore">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<!-- iOS PWA (Safari) -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="TrackScore">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<!-- Font -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/app.css" />
 
-<!-- PDF libs -->
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    :root{
+      --bg0:#070B14;
+      --bg1:#0B1220;
+      --text:#EAF0FF;
+      --muted:#A9B4D0;
+      --muted2:#7E8AA8;
+      --cyan:#22D3EE;
+      --green:#22C55E;
+      --r18:18px;
+      --r22:22px;
+      --w-regular:500;
+      --w-medium:600;
+      --w-semi:700;
+      --w-bold:800;
+      --module-max:250px;
+      --module-radius:22px;
+    }
 
-<style>
-  :root{
-    --bg0:#070B14;
-    --bg1:#0B1220;
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
 
-    --text:#EAF0FF;
-    --muted:#A9B4D0;
-    --muted2:#7E8AA8;
+    body{
+      margin:0;
+      height:100%;
+      overflow:hidden;
+      overflow-x:hidden;
+      font-family: Manrope, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      letter-spacing:-0.01em;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(34,211,238,.18), transparent 60%),
+        radial-gradient(900px 500px at 90% 15%, rgba(34,197,94,.14), transparent 55%),
+        radial-gradient(700px 420px at 10% 20%, rgba(28,78,216,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      -webkit-text-size-adjust:100%;
+      -webkit-tap-highlight-color:transparent;
+      overscroll-behavior:none;
+    }
 
-    --cyan:#22D3EE;
-    --blue:#1C4ED8;
-    --green:#22C55E;
+    .app{
+      height:100dvh;
+      display:flex;
+      flex-direction:column;
+      padding:
+        env(safe-area-inset-top)
+        env(safe-area-inset-right)
+        0
+        env(safe-area-inset-left);
+    }
 
-    --yellow:#FACC15;
-    --redcard:#EF4444;
+    .container{
+      width:100%;
+      max-width:960px;
+      margin:0 auto;
+      padding:10px 12px;
+      min-width:0;
+    }
 
-    --r14:14px;
-    --r16:16px;
-    --r18:18px;
-    --r22:22px;
+    img, svg{
+      max-width:100%;
+      height:auto;
+      display:block;
+    }
 
-    --w-regular: 500;
-    --w-medium: 600;
-    --w-semi: 700;
-    --w-bold: 800;
-  }
+    .brandbar{
+      margin:0 auto 6px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      user-select:none;
+      min-width:0;
+    }
 
-  *{ box-sizing:border-box; }
-  html, body{ height:100%; }
+    .brandiconImg{
+      width:34px;
+      height:34px;
+      border-radius:10px;
+      object-fit:cover;
+      box-shadow:0 14px 26px rgba(0,0,0,.35);
+      flex:0 0 auto;
+    }
 
-  /* ✅ Belangrijk: body zelf NIET scrollen + nooit horizontaal overflow */
-  body{
-    margin:0;
-    height: 100%;
-    overflow: hidden;
-    overflow-x: hidden;
+    .brandlogoImg{
+      height:28px;
+      width:auto;
+      filter:drop-shadow(0 10px 18px rgba(0,0,0,.35));
+      flex:0 1 auto;
+      min-width:0;
+    }
 
-    font-family: Manrope, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    letter-spacing: -0.01em;
-    color: var(--text);
+    .installRow{
+      margin:0 auto 12px;
+      display:flex;
+      justify-content:flex-end;
+      min-width:0;
+    }
 
-    background:
-      radial-gradient(1200px 600px at 50% -10%, rgba(34,211,238,.18), transparent 60%),
-      radial-gradient(900px 500px at 90% 15%, rgba(34,197,94,.14), transparent 55%),
-      radial-gradient(700px 420px at 10% 20%, rgba(28,78,216,.16), transparent 55%),
-      linear-gradient(180deg, var(--bg0), var(--bg1));
+    #installBtn{
+      display:none;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      font-weight:var(--w-medium);
+      box-shadow:0 12px 26px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.10);
+      cursor:pointer;
+      touch-action:manipulation;
+    }
 
-    -webkit-text-size-adjust: 100%;
-    -webkit-tap-highlight-color: transparent;
-    overscroll-behavior: none;
-  }
+    #installBtn:active{ transform:translateY(1px); }
 
-  /* ✅ App layout: header (vast) + scroll (midden) + footer (vast) */
-  .app{
-    height: 100dvh;
-    display:flex;
-    flex-direction: column;
+    #installBtn svg{
+      width:18px;
+      height:18px;
+      opacity:.92;
+    }
 
-    padding:
-      env(safe-area-inset-top)
-      env(safe-area-inset-right)
-      0
-      env(safe-area-inset-left);
-  }
+    .neon-card{
+      position:relative;
+      overflow:hidden;
+      border-radius:var(--r22);
+      border:1px solid rgba(255,255,255,.10);
+      background:
+        radial-gradient(900px 200px at 50% -40%, rgba(255,255,255,.06), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+      backdrop-filter:blur(14px);
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.62),
+        inset 0 1px 0 rgba(255,255,255,.12);
+    }
 
-  /* ✅ Zorg dat container nooit breder wordt dan viewport */
-  .container{
-    width: 100%;
-    max-width: 560px;
-    margin: 0 auto;
-    padding: 10px 12px;
-    min-width: 0;
-  }
+    .neon-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      padding:2px;
+      background:var(--_glowBorder, linear-gradient(90deg, rgba(34,211,238,.95), rgba(34,197,94,.75)));
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite:xor;
+      mask-composite:exclude;
+      opacity:.85;
+      pointer-events:none;
+    }
 
-  img, svg{ max-width:100%; height:auto; }
+    .neon-card::after{
+      content:"";
+      position:absolute;
+      inset:-40px -40px -70px -40px;
+      border-radius:inherit;
+      background:
+        radial-gradient(260px 120px at 50% 108%, var(--_glowSoft, rgba(34,211,238,.34)), transparent 65%),
+        radial-gradient(520px 260px at 50% 20%, rgba(255,255,255,.06), transparent 60%);
+      opacity:.85;
+      filter:blur(6px);
+      pointer-events:none;
+    }
 
-  /* ===== Brand header ===== */
-  .brandbar{
-    margin: 0 auto 6px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap: 10px;
-    user-select:none;
-    min-width: 0;
-  }
+    .homeWrap{
+      flex:1 1 auto;
+      overflow:auto;
+      overflow-x:hidden;
+      -webkit-overflow-scrolling:touch;
+      padding-bottom:14px;
+      min-width:0;
+    }
 
-  .brandiconImg{
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    display:block;
-    object-fit: cover;
-    box-shadow: 0 14px 26px rgba(0,0,0,.35);
-    flex: 0 0 auto;
-  }
+    .homeHero{
+      padding:18px 18px;
+      margin-bottom:14px;
+      --_glowBorder: linear-gradient(90deg, rgba(34,211,238,.95), rgba(34,197,94,.75));
+      --_glowSoft: rgba(34,211,238,.28);
+    }
 
-  .brandlogoImg{
-    height: 28px;
-    width: auto;
-    display:block;
-    filter: drop-shadow(0 10px 18px rgba(0,0,0,.35));
-    flex: 0 1 auto;
-    min-width: 0;
-  }
+    .homeHero h1{
+      margin:0 0 8px;
+      font-size:clamp(24px, 7vw, 34px);
+      line-height:1.05;
+      font-weight:var(--w-bold);
+      letter-spacing:-0.02em;
+      text-shadow:0 10px 22px rgba(0,0,0,.28);
+    }
 
-  /* ===== Install pill ===== */
-  .installRow{
-    margin: 0 auto 10px;
-    display:flex;
-    justify-content:flex-end;
-    min-width: 0;
-  }
-  #installBtn{
-    display:none;
-    align-items:center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.06);
-    color: var(--text);
-    font-weight: var(--w-medium);
-    box-shadow: 0 12px 26px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.10);
-    cursor:pointer;
-    touch-action: manipulation;
-  }
-  #installBtn:active{ transform: translateY(1px); }
-  #installBtn svg{ width: 18px; height: 18px; opacity:.92; }
+    .homeHero p{
+      margin:0;
+      color:var(--muted);
+      font-weight:var(--w-regular);
+      line-height:1.45;
+      font-size:15px;
+      max-width:46ch;
+    }
 
-  /* ===== Neon Card Utility ===== */
-  .neon-card{
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--r22);
-    border: 1px solid rgba(255,255,255,.10);
-    background:
-      radial-gradient(900px 200px at 50% -40%, rgba(255,255,255,.06), transparent 62%),
-      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
-    backdrop-filter: blur(14px);
-    box-shadow:
-      0 20px 60px rgba(0,0,0,.62),
-      inset 0 1px 0 rgba(255,255,255,.12);
-  }
-  .neon-card::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    border-radius: inherit;
-    padding: 2px;
-    background: var(--_glowBorder, linear-gradient(90deg, rgba(34,211,238,.95), rgba(34,197,94,.75)));
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: .85;
-    pointer-events:none;
-  }
-  .neon-card::after{
-    content:"";
-    position:absolute;
-    inset:-40px -40px -70px -40px;
-    border-radius: inherit;
-    background:
-      radial-gradient(260px 120px at 50% 108%, var(--_glowSoft, rgba(34,211,238,.34)), transparent 65%),
-      radial-gradient(520px 260px at 50% 20%, rgba(255,255,255,.06), transparent 60%);
-    opacity: .85;
-    filter: blur(6px);
-    pointer-events:none;
-  }
+    .sectionLabel{
+      margin:4px 2px 10px;
+      color:var(--muted2);
+      font-size:12px;
+      font-weight:var(--w-semi);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
 
-  /* ===== SCOREBOARD ===== */
-  .top-row{
-    margin: 0 auto 12px;
-    padding: 14px 14px;
-    display:grid;
-    grid-template-columns: 1fr 1.3fr 1fr;
-    align-items:center;
-    gap: 10px;
-    min-width: 0;
-  }
-  .top-row.neon-card{
-    --_glowBorder: linear-gradient(90deg, rgba(34,211,238,.95), rgba(34,197,94,.75));
-    --_glowSoft: rgba(34,211,238,.28);
-  }
-  .scorebox{ min-width:0; }
-  .scorebox span{
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum";
-    -webkit-font-smoothing: antialiased;
-    text-align:center;
-    display:block;
-    line-height: 1;
-    font-weight: var(--w-bold);
-    letter-spacing: .01em;
-    color: #F4F7FF;
-    font-size: clamp(42px, 21vw, 78px);
-    text-shadow:
-      0 6px 14px rgba(0,0,0,.42),
-      0 1px 0 rgba(255,255,255,.06);
-    min-width: 0;
-  }
-  #timer{
-    cursor:pointer;
-    user-select:none;
-    font-variant-numeric: tabular-nums;
-    text-align:center;
-    padding: 6px 0;
-    font-weight: var(--w-semi);
-    letter-spacing: .02em;
-    font-size: clamp(28px, 9.5vw, 54px);
-    background: linear-gradient(90deg, #9BE7FF 0%, #6EE7B7 55%, #22C55E 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow:
-      0 8px 22px rgba(0,0,0,.32),
-      0 0 18px rgba(34,211,238,.18);
-    min-width: 0;
-  }
+    .moduleGrid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, var(--module-max)));
+      justify-content:center;
+      justify-items:center;
+      align-items:start;
+      gap:18px 20px;
+      width:100%;
+    }
 
-  /* ===== ACTION BAR ===== */
-  .action-bar{
-    display:grid;
+    .moduleLink{
+      display:block;
+      width:min(100%, var(--module-max));
+      text-decoration:none;
+      border-radius:var(--module-radius);
+      transition:transform .18s ease, filter .18s ease;
+      min-width:0;
+    }
 
-    /* ✅ Mobiel-proof: geen vaste 140px meer */
-    grid-template-columns: minmax(0, 1fr) minmax(88px, 120px) auto;
+    .moduleLink:hover{
+      transform:translateY(-2px);
+      filter:brightness(1.03);
+    }
 
-    gap: 10px;
-    align-items: stretch;
-    margin-bottom: 12px;
-    min-width: 0;
-  }
+    .moduleLink:active{
+      transform:translateY(1px);
+    }
 
-  #newMatchBtn{
-    width:100%;
-    min-width: 0;
+    .moduleImageWrap{
+      position:relative;
+      width:100%;
+      max-width:var(--module-max);
+      margin:0 auto;
+      border-radius:var(--module-radius);
+      overflow:visible;
+      padding-inline:4px;
+    }
 
-    border-radius: var(--r18);
-    padding: 14px 14px;
-    border: 1px solid rgba(255,255,255,.10);
-    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
-    box-shadow: 0 16px 34px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
-    color: var(--text);
-    font-weight: var(--w-medium);
-    font-size: 16px;
+    .moduleImage{
+      width:100%;
+      max-width:var(--module-max);
+      height:auto;
+      margin:0;
+      object-fit:contain;
+      filter:
+        drop-shadow(0 14px 28px rgba(0,0,0,.42))
+        drop-shadow(0 8px 18px rgba(0,0,0,.24));
+      transform-origin:center center;
+    }
 
-    display:flex;
-    align-items:center;
-    justify-content:flex-start;
-    gap: 12px;
-    touch-action: manipulation;
-  }
-  #newMatchBtn .btn-icon{
-    width: 34px;
-    height: 34px;
-    object-fit: contain;
-    display:block;
-    filter: drop-shadow(0 6px 16px rgba(0,0,0,.35));
-    flex: 0 0 auto;
-  }
-  #newMatchBtn .btn-text{
-    line-height: 1.05;
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-  #newMatchBtn .btn-text small{
-    display:block;
-    margin-top: 2px;
-    color: var(--muted);
-    font-weight: var(--w-regular);
-    font-size: 12px;
+    .moduleCaption{
+      margin-top:10px;
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+      font-weight:var(--w-medium);
+    }
 
-    /* ✅ Tekst mag niet overflowen */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-  #newMatchBtn:active{ transform: translateY(1px); }
+    .footerNote{
+      margin-top:16px;
+      padding:14px 16px;
+      border-radius:var(--r18);
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.4;
+      box-shadow:0 16px 34px rgba(0,0,0,.30);
+    }
 
-  #startPauseBtn{
-    width:100%;
-    border-radius: var(--r18);
-    border: 1px solid rgba(255,255,255,.10);
-    background:
-      radial-gradient(520px 150px at 50% 0%, rgba(255,255,255,.06), rgba(255,255,255,.02)),
-      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
-    box-shadow: 0 18px 44px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);
-    color: var(--text);
-    font-size: 44px;
-    font-weight: var(--w-semi);
-    touch-action: manipulation;
-    backdrop-filter: blur(12px);
-    min-width: 0;
-  }
-  #startPauseBtn:active{ transform: translateY(1px); }
+    @media (max-width: 900px){
+      :root{
+        --module-max:230px;
+      }
+    }
 
-  .right-actions{
-    display:grid;
-    grid-template-columns: 48px 48px 48px; /* ✅ compacter */
-    gap: 8px;
-    justify-content: end;
-    align-items: stretch;
-    min-width: 0;
-  }
-  #subBtn{
-    width:48px;
-    border-radius: var(--r18);
-    border: 1px solid rgba(255,255,255,.10);
-    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
-    box-shadow: 0 16px 34px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    touch-action: manipulation;
-    justify-self: end;
-    min-width: 0;
-    padding: 0;
-  }
-  #subBtn .sub-icon{
-    width:auto;
-    height: 70%;
-    max-height: 40px;
-    object-fit: contain;
-    display:block;
-    filter: drop-shadow(0 6px 16px rgba(0,0,0,.35));
-    pointer-events:none;
-  }
-  #subBtn:active{ transform: translateY(1px); }
+    @media (max-width: 760px){
+      :root{
+        --module-max:220px;
+        --module-radius:20px;
+      }
 
-  .card-btn{
-    border:none;
-    border-radius: var(--r18);
-    padding:0;
-    touch-action: manipulation;
-    box-shadow: 0 16px 34px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
-    min-width: 0;
-  }
-  .card-btn:active{ transform: translateY(1px); }
-  #yellowBtn{ background: linear-gradient(180deg, rgba(250,204,21,.95), rgba(250,204,21,.78)); border: 1px solid rgba(0,0,0,.15); }
-  #redBtn{ background: linear-gradient(180deg, rgba(239,68,68,.95), rgba(239,68,68,.78)); border: 1px solid rgba(0,0,0,.18); }
+      .container{
+        max-width:560px;
+      }
 
-  /* ===== GOAL BUTTONS ===== */
-  .goal-container{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    width:100%;
-    margin-bottom: 12px;
-    min-width: 0;
-  }
-  .goal-btn{
-    border-radius: var(--r22);
-    padding: 18px 0;
-    border: 1px solid rgba(255,255,255,.08);
-    background:
-      radial-gradient(700px 180px at 50% -30%, rgba(255,255,255,.07), transparent 60%),
-      linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.020));
-    box-shadow:
-      0 18px 44px rgba(0,0,0,.55),
-      inset 0 1px 0 rgba(255,255,255,.10);
-    color: var(--text);
-    text-transform: uppercase;
-    line-height: 1.05;
-    touch-action: manipulation;
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-    min-width: 0;
-  }
-  .goal-btn::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    border-radius: inherit;
-    padding: 2px;
-    background: var(--_glowBorder, linear-gradient(90deg, rgba(34,211,238,.95), rgba(28,78,216,.55)));
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: .95;
-    pointer-events:none;
-  }
-  .goal-btn::after{
-    content:"";
-    position:absolute;
-    inset:-40px -40px -70px -40px;
-    border-radius: inherit;
-    background:
-      radial-gradient(220px 110px at 50% 108%, var(--_glowSoft, rgba(34,211,238,.42)), transparent 65%),
-      radial-gradient(420px 220px at 50% 20%, rgba(255,255,255,.06), transparent 60%);
-    opacity: .9;
-    filter: blur(6px);
-    pointer-events:none;
-  }
-  .goal-container .goal-btn:first-child{
-    --_glowBorder: linear-gradient(90deg, rgba(34,211,238,.95), rgba(28,78,216,.55));
-    --_glowSoft: rgba(34,211,238,.42);
-    box-shadow:
-      0 18px 44px rgba(0,0,0,.55),
-      0 0 0 1px rgba(34,211,238,.18),
-      0 0 34px rgba(34,211,238,.18),
-      inset 0 1px 0 rgba(255,255,255,.10);
-  }
-  .goal-container .goal-btn:last-child{
-    --_glowBorder: linear-gradient(90deg, rgba(34,197,94,.85), rgba(16,185,129,.55));
-    --_glowSoft: rgba(34,197,94,.36);
-    box-shadow:
-      0 18px 44px rgba(0,0,0,.55),
-      0 0 0 1px rgba(34,197,94,.16),
-      0 0 34px rgba(34,197,94,.16),
-      inset 0 1px 0 rgba(255,255,255,.10);
-  }
-  .goal-btn:active{ transform: translateY(1px); filter: brightness(1.03); }
-  .goal-btn .goal-word{
-    display:block;
-    font-weight: var(--w-medium);
-    letter-spacing: .18em;
-    color: rgba(234,240,255,.58);
-    font-size: clamp(14px, 4vw, 18px);
-  }
-  .goal-btn .team-word{
-    display:block;
-    margin-top: 10px;
-    font-weight: var(--w-bold);
-    font-size: clamp(20px, 6.2vw, 30px);
-    padding: 0 10px;
-    overflow-wrap:anywhere;
-    text-shadow: 0 12px 26px rgba(0,0,0,.36);
-    min-width: 0;
-  }
+      .moduleGrid{
+        grid-template-columns:1fr;
+        gap:4px;
+      }
+    }
 
-  /* ✅ Scroll area: enkel dit stuk mag scrollen */
-  .scrollArea{
-    flex: 1 1 auto;
-    overflow: auto;
-    overflow-x: hidden; /* ✅ nooit horizontaal */
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 10px;
-    min-width: 0;
-  }
+    @media (max-width: 390px){
+      :root{
+        --module-max:190px;
+        --module-radius:18px;
+      }
 
-  /* ===== TABLE ===== */
-  #logWrap{ margin-top: 6px; width:100%; min-width: 0; }
-  table#logTable{
-    width:100%;
-    border-collapse: separate;
-    border-spacing: 0 10px;
-    table-layout: fixed;
-  }
-  #logTable td{
-    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
-    border-top: 1px solid rgba(255,255,255,.06);
-    border-bottom: 1px solid rgba(0,0,0,.25);
-    padding: 12px 10px;
-    font-variant-numeric: tabular-nums;
-    font-size: clamp(16px, 4.5vw, 24px);
-    font-weight: var(--w-medium);
-    vertical-align: middle;
-    color: var(--text);
-    min-width: 0;
-  }
-  #logTable tr:nth-child(even) td{
-    background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.028));
-  }
-  #logTable tr td:first-child{ border-top-left-radius: var(--r18); border-bottom-left-radius: var(--r18); }
-  #logTable tr td:last-child{ border-top-right-radius: var(--r18); border-bottom-right-radius: var(--r18); }
-  #logTable col.col-min{ width: 70px; }
-  #logTable col.col-score{ width: 80px; }
-  #logTable col.col-info{ width: auto; }
-  #logTable col.col-icon{ width: 52px; }
-  .td-min{ font-weight: var(--w-semi); color: var(--muted); }
-  .td-score{ font-weight: var(--w-bold); text-align:center; }
-  .td-info, .td-swap{ font-weight: var(--w-semi); overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .swap-label{ font-weight: var(--w-regular); color: var(--muted2); }
-  .td-icon{ text-align:center; }
-  .icon-btn{
-    width: 36px; height: 36px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.10);
-    background: rgba(255,255,255,.04);
-    cursor:pointer;
-    padding:0;
-    font-size: 18px;
-    color: var(--text);
-    touch-action: manipulation;
-    box-shadow: 0 10px 18px rgba(0,0,0,.25));
-  }
-  .icon-btn:active{ transform: translateY(1px); }
+      .container{
+        padding:8px 10px;
+      }
 
-  .card-icon{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width: 36px;
-    height: 28px;
-    vertical-align: middle;
-    margin-right: 8px;
-    filter: drop-shadow(0 6px 12px rgba(0,0,0,.25));
-  }
-  .card-icon svg{ width: 36px; height: 28px; display:block; }
+      .brandlogoImg{
+        height:24px;
+      }
 
-  /* ✅ Footer: knop blijft onderaan zichtbaar */
-  .footerBar{
-    flex: 0 0 auto;
-    padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
-    min-width: 0;
-  }
+      .moduleGrid{
+        gap:14px;
+      }
 
-  #pdfBtn{
-    width:100%;
-    border-radius: var(--r22);
-    border: 1px solid rgba(255,255,255,.10);
-    padding: 16px 0;
-    font-size: clamp(16px, 5vw, 20px);
-    font-weight: var(--w-semi);
-    letter-spacing: 0.01em;
-    color: var(--text);
-    background: transparent;
-    touch-action: manipulation;
-    min-width: 0;
-  }
-  #pdfBtn.neon-card{
-    --_glowBorder: linear-gradient(90deg, rgba(34,211,238,.95), rgba(34,197,94,.75));
-    --_glowSoft: rgba(34,197,94,.22);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap: 10px;
-  }
-  #pdfBtn:active{ transform: translateY(1px); }
-  .pdf-ico{ width: 22px; height: 22px; opacity: .9; filter: drop-shadow(0 6px 12px rgba(0,0,0,.25)); }
+      .moduleImageWrap{
+        padding-inline:2px;
+      }
 
-  /* ===== POPUPS ===== */
-  .popup-bg{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.72);
-    display:none;
-    justify-content:center;
-    align-items:flex-start;
-    padding-top: 30px;
-    padding-left: 16px;
-    padding-right: 16px;
-    padding-bottom: 16px;
-    z-index:9999;
-    backdrop-filter: blur(8px);
-  }
-  .popup{
-    width: min(520px, 100%);
-    border-radius: 18px;
-    padding: 18px;
-    color: var(--text);
-    background:
-      radial-gradient(600px 180px at 50% 0%, rgba(34,211,238,.14), transparent 60%),
-      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-    border: 1px solid rgba(255,255,255,.12);
-    box-shadow: 0 26px 70px rgba(0,0,0,.65);
-  }
-  .popup h2{ margin: 0 0 12px; font-size: 20px; font-weight: var(--w-semi); }
-  .popup .hint{ color: var(--muted); font-size: 13px; margin: -6px 0 10px; line-height: 1.35; font-weight: var(--w-regular); }
-  .popup input, .popup select{
-    width:100%;
-    padding: 12px;
-    font-size: 16px;
-    margin-top: 8px;
-    margin-bottom: 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.12);
-    background: rgba(0,0,0,.25);
-    color: var(--text);
-    outline: none;
-    font-weight: var(--w-medium);
-  }
-  .popup input::placeholder{ color: rgba(234,240,255,.45); font-weight: var(--w-regular); }
-  .checkrow{
-    display:flex;
-    align-items:center;
-    gap: 10px;
-    font-size: 16px;
-    margin-top: 6px;
-    margin-bottom: 10px;
-    user-select:none;
-    color: var(--muted);
-    font-weight: var(--w-regular);
-  }
-  .checkrow input{ width: 20px; height: 20px; }
-  .popup button{
-    font-size: 16px;
-    padding: 12px;
-    width:100%;
-    margin-top: 10px;
-    border: none;
-    border-radius: 14px;
-    cursor:pointer;
-    touch-action: manipulation;
-    font-weight: var(--w-semi);
-    letter-spacing: .01em;
-    box-shadow: 0 12px 22px rgba(0,0,0,.30);
-  }
-  .btn-ok{ background: linear-gradient(90deg, rgba(28,78,216,.85), rgba(34,197,94,.75)); color: #fff; }
-  .btn-cancel{ background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); color: var(--text); }
-  .btn-danger{ background: linear-gradient(180deg, rgba(239,68,68,.92), rgba(239,68,68,.72)); color:#fff; }
+      .moduleCaption{
+        font-size:12.5px;
+      }
+    }
 
-  @media (max-width: 390px){
-    #startPauseBtn{ font-size: 40px; }
-    .brandlogoImg{ height: 24px; }
-    #logTable col.col-min{ width: 56px; }
-    #logTable col.col-score{ width: 68px; }
-    #logTable col.col-icon{ width: 48px; }
-    .icon-btn{ width: 34px; height: 34px; font-size: 16px; }
-    .right-actions{ grid-template-columns: 46px 46px 46px; gap: 6px; }
-    #subBtn{ width:46px; }
-  }
-</style>
+    @media (max-width: 320px){
+      :root{
+        --module-max:156px;
+        --module-radius:16px;
+      }
+
+      .homeHero{
+        padding:14px 14px;
+      }
+
+      .homeHero h1{
+        font-size:22px;
+      }
+
+      .homeHero p{
+        font-size:14px;
+      }
+
+      .sectionLabel{
+        margin-bottom:8px;
+        font-size:11px;
+      }
+
+      .moduleGrid{
+        gap:12px;
+      }
+    }
+
+    @media (max-width: 280px){
+      :root{
+        --module-max:min(100%, 136px);
+      }
+
+      .container{
+        padding:6px 8px;
+      }
+    }
+  </style>
 </head>
 
 <body>
-
-<div class="app">
-
-  <!-- ✅ VASTE HEADER (niet scrollen) -->
-  <div class="container">
-    <div class="brandbar" aria-label="TrackScore">
-      <img class="brandiconImg" src="img/icoon.png" alt="TrackScore icoon">
-      <img class="brandlogoImg" src="img/logo.png" alt="TrackScore">
-    </div>
-
-    <div class="installRow">
-      <button id="installBtn" type="button" aria-label="Installeer TrackScore">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M12 3v10" stroke="white" stroke-opacity=".9" stroke-width="2" stroke-linecap="round"/>
-          <path d="M8 9l4 4 4-4" stroke="white" stroke-opacity=".9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" stroke="white" stroke-opacity=".9" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        Installeren
-      </button>
-    </div>
-
-    <div class="top-row neon-card">
-      <div class="scorebox"><span id="scoreHome">0</span></div>
-      <div id="timer">00:00</div>
-      <div class="scorebox"><span id="scoreAway">0</span></div>
-    </div>
-
-    <div class="action-bar">
-      <button id="newMatchBtn" type="button">
-        <img src="reset.svg" alt="" class="btn-icon">
-        <span class="btn-text"><small>Reset wedstrijd</small></span>
-      </button>
-
-      <button id="startPauseBtn" type="button" aria-label="Start of pauze">▶</button>
-
-      <div class="right-actions" aria-label="Wissel en kaarten">
-        <button id="subBtn" type="button" aria-label="Wissel">
-          <img src="wissel.svg" alt="Wissel" class="sub-icon">
-        </button>
-        <button id="yellowBtn" class="card-btn" type="button" title="Gele kaart" aria-label="Gele kaart"></button>
-        <button id="redBtn" class="card-btn" type="button" title="Rode kaart" aria-label="Rode kaart"></button>
-      </div>
-    </div>
-
-    <div class="goal-container">
-      <button class="goal-btn" type="button" onclick="openGoalPopup('home')">
-        <span class="goal-word">GOAL</span>
-        <span class="team-word" id="goalHomeTeamText">THUIS</span>
-      </button>
-
-      <button class="goal-btn" type="button" onclick="openGoalPopup('away')">
-        <span class="goal-word">GOAL</span>
-        <span class="team-word" id="goalAwayTeamText">UIT</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- ✅ ENKEL DIT MIDDENSTUK MAG SCROLLEN -->
-  <div class="scrollArea">
+  <div class="app">
     <div class="container">
-      <div id="logWrap">
-        <table id="logTable" aria-label="Overzicht">
-          <colgroup>
-            <col class="col-min">
-            <col class="col-score">
-            <col class="col-info">
-            <col class="col-icon">
-            <col class="col-icon">
-          </colgroup>
-          <tbody id="logTbody"></tbody>
-        </table>
+      <div class="brandbar" aria-label="TrackScore Suite">
+        <img class="brandiconImg" src="img/icoon.png" alt="TrackScore icoon">
+        <img class="brandlogoImg" src="img/logo.png" alt="TrackScore">
+      </div>
+
+      <div class="installRow">
+        <button id="installBtn" type="button" aria-label="Installeer app">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3v10" stroke="white" stroke-opacity=".9" stroke-width="2" stroke-linecap="round"/>
+            <path d="M8 9l4 4 4-4" stroke="white" stroke-opacity=".9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" stroke="white" stroke-opacity=".9" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Installeren
+        </button>
+      </div>
+    </div>
+
+    <div class="homeWrap">
+      <div class="container">
+        <div class="sectionLabel">Score registratie</div>
+
+        <div class="moduleGrid">
+          <a class="moduleLink" href="./games/trackscore.html" aria-label="Open SoccerScore">
+            <div class="moduleImageWrap">
+              <img
+                class="moduleImage"
+                src="img/soccerscore.png"
+                alt="SoccerScore module"
+                loading="eager"
+                decoding="async"
+              >
+            </div>
+          </a>
+
+          <a class="moduleLink" href="./games/dartscore.html" aria-label="Open DartScore">
+            <div class="moduleImageWrap">
+              <img
+                class="moduleImage"
+                src="img/dartscore.png"
+                alt="DartScore module"
+                loading="eager"
+                decoding="async"
+              >
+            </div>
+          </a>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ✅ VASTE FOOTER (Download knop altijd onderaan) -->
-  <div class="footerBar">
-    <div class="container" style="padding:0;">
-      <button id="pdfBtn" class="neon-card" type="button" onclick="downloadPDF()">
-        <svg class="pdf-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-6Z" stroke="white" stroke-opacity=".85" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M14 2v6h6" stroke="white" stroke-opacity=".85" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M8 15h8" stroke="white" stroke-opacity=".85" stroke-width="2" stroke-linecap="round"/>
-          <path d="M8 18h6" stroke="white" stroke-opacity=".85" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        Download rapport
-      </button>
-    </div>
-  </div>
-
-</div>
-
-<!-- MESSAGE POPUP -->
-<div id="msgPopupBg" class="popup-bg">
-  <div class="popup">
-    <h2 id="msgTitle">Melding</h2>
-    <div id="msgBody" style="font-size:16px; line-height:1.35; color:var(--text);"></div>
-    <button class="btn-ok" type="button" onclick="closeMsg()">OK</button>
-  </div>
-</div>
-
-<!-- GOAL POPUP -->
-<div id="goalPopupBg" class="popup-bg">
-  <div class="popup">
-    <h2 id="goalPopupTitle">Geef rugnummer in</h2>
-
-    <input id="goalNumberInput" type="text" inputmode="text" placeholder="Rugnummer (bv. 10, A12, GK)">
-
-    <label class="checkrow">
-      <input id="goalOgCheck" type="checkbox">
-      Owngoal (OG)
-    </label>
-
-    <label class="checkrow">
-      <input id="goalPenCheck" type="checkbox">
-      Penalty
-    </label>
-
-    <button class="btn-ok" type="button" onclick="confirmGoal()">OK</button>
-    <button class="btn-cancel" type="button" onclick="closeGoalPopup()">Annuleer</button>
-  </div>
-</div>
-
-<!-- SUB POPUP -->
-<div id="subPopupBg" class="popup-bg">
-  <div class="popup">
-    <h2>Wissel</h2>
-    <div style="color:var(--muted); font-weight:var(--w-medium);">Speler UIT (rugnr):</div>
-    <input id="subOutInput" type="text" inputmode="text" placeholder="bv. 7 of GK">
-    <div style="color:var(--muted); font-weight:var(--w-medium);">Speler IN (rugnr):</div>
-    <input id="subInInput" type="text" inputmode="text" placeholder="bv. 18 of A12">
-
-    <button class="btn-ok" type="button" onclick="confirmSub()">OK</button>
-    <button class="btn-cancel" type="button" onclick="closeSubPopup()">Annuleer</button>
-  </div>
-</div>
-
-<!-- CARD POPUP -->
-<div id="cardPopupBg" class="popup-bg">
-  <div class="popup">
-    <h2 id="cardTitle">Kaart</h2>
-    <div class="hint" id="cardHint"></div>
-
-    <div style="color:var(--muted); font-weight:var(--w-medium);">Ploeg:</div>
-    <select id="cardTeamSelect"></select>
-
-    <input id="cardNumberInput" type="text" inputmode="text" placeholder="Rugnummer (bv. 4 of GK)">
-
-    <button class="btn-ok" type="button" onclick="confirmCard()">OK</button>
-    <button class="btn-cancel" type="button" onclick="closeCardPopup()">Annuleer</button>
-  </div>
-</div>
-
-<!-- NEW MATCH POPUP -->
-<div id="newMatchPopupBg" class="popup-bg">
-  <div class="popup">
-    <h2>Nieuwe wedstrijd</h2>
-
-    <div style="color:var(--muted); font-weight:var(--w-medium);">Ploeg THUIS:</div>
-    <input id="newHomeName" type="text" placeholder="bv. Team A">
-
-    <div style="color:var(--muted); font-weight:var(--w-medium);">Ploeg UIT:</div>
-    <input id="newAwayName" type="text" placeholder="bv. Team B">
-
-    <button class="btn-danger" type="button" onclick="confirmNewMatch()">Start nieuwe wedstrijd</button>
-    <button class="btn-cancel" type="button" onclick="closeNewMatchPopup()">Annuleer</button>
-  </div>
-</div>
-
-<!-- TIME POPUP -->
-<div id="timePopupBg" class="popup-bg">
-  <div class="popup">
-    <h2>Timer instellen</h2>
-    <div class="hint">Gebruik <b>mm:ss</b> (bv. 18:30) of enkel <b>minuten</b> (bv. 63)</div>
-    <input id="timeInput" inputmode="numeric" placeholder="bv. 45:00">
-
-    <button class="btn-ok" type="button" onclick="confirmTimeSet()">OK</button>
-    <button class="btn-cancel" type="button" onclick="closeTimePopup()">Annuleer</button>
-  </div>
-</div>
-
-<!-- EDIT POPUP -->
-<div id="editPopupBg" class="popup-bg">
-  <div class="popup">
-    <h2 id="editTitle">Wijzig item</h2>
-
-    <div style="color:var(--muted); font-weight:var(--w-medium);">
-      Tijd (mm:ss):
-      <input id="editTime" inputmode="numeric" placeholder="bv. 18:00">
-    </div>
-
-    <div id="editTeamWrap" style="color:var(--muted); font-weight:var(--w-medium);">
-      Team:
-      <select id="editTeam"></select>
-    </div>
-
-    <div id="editNumberWrap" style="color:var(--muted); font-weight:var(--w-medium);">
-      Rugnummer:
-      <input id="editNumber" type="text" inputmode="text" placeholder="bv. 10 of GK">
-    </div>
-
-    <div id="editGoalExtrasWrap">
-      <label class="checkrow" style="margin-top:0;">
-        <input id="editOgCheck" type="checkbox">
-        Owngoal (OG)
-      </label>
-      <label class="checkrow" style="margin-top:0;">
-        <input id="editPenCheck" type="checkbox">
-        Penalty
-      </label>
-    </div>
-
-    <div id="editSubWrap" style="display:none; color:var(--muted); font-weight:var(--w-medium);">
-      Speler UIT (rugnr):
-      <input id="editOut" type="text" inputmode="text" placeholder="bv. 7 of GK">
-      Speler IN (rugnr):
-      <input id="editIn" type="text" inputmode="text" placeholder="bv. 18 of A12">
-    </div>
-
-    <div id="editCardWrap" style="display:none; color:var(--muted); font-weight:var(--w-medium);">
-      Ploeg:
-      <select id="editCardTeam"></select>
-
-      Type kaart:
-      <select id="editCardType">
-        <option value="yellow">Geel</option>
-        <option value="red">Rood</option>
-      </select>
-
-      Rugnummer:
-      <input id="editCardNumber" type="text" inputmode="text" placeholder="bv. 4 of GK">
-    </div>
-
-    <button class="btn-ok" type="button" onclick="saveEdit()">Opslaan</button>
-    <button class="btn-cancel" type="button" onclick="closeEditPopup()">Annuleer</button>
-  </div>
-</div>
-
-<script>
-/* =========================================================
-   TrackScore - PWA proof + install prompt
-   - Penalty label: (P)
-   - Rugnr: letters + cijfers
-   - OG & Penalty exclusief
-   ========================================================= */
-
-const STORAGE_KEY = "trackscore_v5_pwa_install";
-
-/* -------------------- STATE -------------------- */
-let teamHomeName = "THUIS";
-let teamAwayName = "UIT";
-let items = [];
-let home = 0;
-let away = 0;
-
-let running = false;
-let elapsedWhenStartedSec = 0;
-let startEpochMs = null;
-let uiInterval = null;
-
-const HALF_TIME_SECONDS = 45 * 60;
-let halfTimeTriggered = false;
-
-const timerEl = document.getElementById("timer");
-const tbody = document.getElementById("logTbody");
-
-/* -------------------- MESSAGE POPUP -------------------- */
-function showMessage(title, body){
-  document.getElementById("msgTitle").textContent = title || "Melding";
-  document.getElementById("msgBody").textContent = body || "";
-  document.getElementById("msgPopupBg").style.display = "flex";
-}
-function closeMsg(){
-  document.getElementById("msgPopupBg").style.display = "none";
-}
-
-/* -------------------- SAVE/LOAD -------------------- */
-function saveState(){
-  const data = { teamHomeName, teamAwayName, items, running, elapsedWhenStartedSec, startEpochMs, halfTimeTriggered };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-
-    if (typeof data.teamHomeName === "string") teamHomeName = data.teamHomeName;
-    if (typeof data.teamAwayName === "string") teamAwayName = data.teamAwayName;
-    if (Array.isArray(data.items)) items = data.items;
-
-    running = !!data.running;
-    if (Number.isFinite(data.elapsedWhenStartedSec)) elapsedWhenStartedSec = data.elapsedWhenStartedSec;
-    startEpochMs = (typeof data.startEpochMs === "number") ? data.startEpochMs : null;
-    halfTimeTriggered = !!data.halfTimeTriggered;
-
-    for (const it of items){
-      if (it.type === "goal"){
-        if (typeof it.isOG !== "boolean") it.isOG = false;
-        if (typeof it.isPenalty !== "boolean") it.isPenalty = false;
-        it.number = String(it.number ?? "").trim();
-        if (it.isOG && it.isPenalty) it.isPenalty = false;
-      }
-      if (it.type === "sub"){
-        it.out = String(it.out ?? "").trim();
-        it.in  = String(it.in ?? "").trim();
-      }
-      if (it.type === "card"){
-        if (it.card !== "yellow" && it.card !== "red") it.card = "yellow";
-        if (it.team !== "home" && it.team !== "away") it.team = "home";
-        it.number = String(it.number ?? "").trim();
-      }
-    }
-
-    recomputeScore();
-    return true;
-  }catch(e){ return false; }
-}
-
-/* -------------------- UI -------------------- */
-function updateTeamUI(){
-  document.getElementById("goalHomeTeamText").textContent = teamHomeName;
-  document.getElementById("goalAwayTeamText").textContent = teamAwayName;
-
-  document.getElementById("editTeam").innerHTML = `
-    <option value="home">${teamHomeName}</option>
-    <option value="away">${teamAwayName}</option>
-  `;
-  document.getElementById("cardTeamSelect").innerHTML = `
-    <option value="home">${teamHomeName}</option>
-    <option value="away">${teamAwayName}</option>
-  `;
-  document.getElementById("editCardTeam").innerHTML = `
-    <option value="home">${teamHomeName}</option>
-    <option value="away">${teamAwayName}</option>
-  `;
-}
-function updateScoreboard(){
-  document.getElementById("scoreHome").textContent = home;
-  document.getElementById("scoreAway").textContent = away;
-}
-function scoringTeamForGoal(goal){ return goal.team; }
-function recomputeScore(){
-  home = 0; away = 0;
-  for (const it of items){
-    if (it.type === "goal"){
-      const t = scoringTeamForGoal(it);
-      if (t === "home") home++; else away++;
-    }
-  }
-}
-function matchMinuteForLog(timeSec){ return Math.floor(timeSec / 60) + 1; }
-function formatTimer(seconds){
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return String(mins).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
-}
-function formatTime(sec){
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
-}
-function teamLabel(team){ return (team === "home") ? teamHomeName : teamAwayName; }
-
-function secondYellowIconHTML(){
-  return `
-    <span class="card-icon" title="2de gele kaart (geel+rood)">
-      <svg viewBox="0 0 60 52" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <rect x="28" y="6" rx="6" ry="6" width="26" height="40" fill="#EF4444" opacity="0.95"/>
-        <rect x="10" y="10" rx="6" ry="6" width="26" height="40" fill="#FACC15" opacity="0.98"/>
-      </svg>
-    </span>
-  `;
-}
-function goalDetailsLabel(it){
-  const tags = [];
-  if (it.isOG) tags.push("OG");
-  if (it.isPenalty) tags.push("P");
-  return tags.length ? ` (${tags.join(", ")})` : "";
-}
-
-/* -------------------- OVERZICHT -------------------- */
-function rebuildLog(){
-  tbody.innerHTML = "";
-  const withIndex = items.map((it, idx) => ({...it, _idx: idx}));
-  withIndex.sort((a,b) => a.timeSec - b.timeSec || a._idx - b._idx);
-
-  let h = 0, a = 0;
-  const yellowCount = {};
-
-  for (const it of withIndex){
-    if (it.type === "goal"){
-      const t = scoringTeamForGoal(it);
-      if (t === "home") h++; else a++;
-    }
-
-    const tr = document.createElement("tr");
-    const minuteTick = matchMinuteForLog(it.timeSec);
-
-    const tdMin = document.createElement("td");
-    tdMin.className = "td-min";
-    tdMin.textContent = `${minuteTick}'`;
-    tr.appendChild(tdMin);
-
-    if (it.type === "goal"){
-      const tdScore = document.createElement("td");
-      tdScore.className = "td-score";
-      tdScore.textContent = `${h}-${a}`;
-      tr.appendChild(tdScore);
-
-      const tdInfo = document.createElement("td");
-      tdInfo.className = "td-info";
-      tdInfo.textContent = `#${it.number}${goalDetailsLabel(it)}`;
-      tr.appendChild(tdInfo);
-    } else if (it.type === "sub"){
-      const tdSwap = document.createElement("td");
-      tdSwap.className = "td-swap";
-      tdSwap.colSpan = 2;
-      tdSwap.innerHTML = `<span class="swap-label">uit:</span> #${it.out} &nbsp;&nbsp; <span class="swap-label">in:</span> #${it.in}`;
-      tr.appendChild(tdSwap);
-    } else if (it.type === "card"){
-      const tdCard = document.createElement("td");
-      tdCard.className = "td-swap";
-      tdCard.colSpan = 2;
-
-      const team = (it.team === "away") ? "away" : "home";
-      const key = `${team}|${it.number}`;
-
-      let html = "";
-      if (it.card === "red"){
-        html = `🟥 #${it.number} (${teamLabel(team)})`;
-      } else {
-        yellowCount[key] = (yellowCount[key] || 0) + 1;
-        html = (yellowCount[key] >= 2)
-          ? `${secondYellowIconHTML()}#${it.number} (${teamLabel(team)})`
-          : `🟨 #${it.number} (${teamLabel(team)})`;
-      }
-
-      tdCard.innerHTML = html;
-      tr.appendChild(tdCard);
-    } else {
-      const td = document.createElement("td");
-      td.colSpan = 2;
-      td.textContent = "-";
-      tr.appendChild(td);
-    }
-
-    const tdEdit = document.createElement("td");
-    tdEdit.className = "td-icon";
-    const btnEdit = document.createElement("button");
-    btnEdit.className = "icon-btn";
-    btnEdit.type = "button";
-    btnEdit.textContent = "✎";
-    btnEdit.addEventListener("click", () => editItem(it._idx));
-    tdEdit.appendChild(btnEdit);
-    tr.appendChild(tdEdit);
-
-    const tdDel = document.createElement("td");
-    tdDel.className = "td-icon";
-    const btnDel = document.createElement("button");
-    btnDel.className = "icon-btn";
-    btnDel.type = "button";
-    btnDel.textContent = "✖";
-    btnDel.addEventListener("click", () => deleteItem(it._idx));
-    tdDel.appendChild(btnDel);
-    tr.appendChild(tdDel);
-
-    tbody.appendChild(tr);
-  }
-}
-
-/* -------------------- TIMER -------------------- */
-function getElapsedSecondsNow(){
-  if (!running) return Math.max(0, Math.floor(elapsedWhenStartedSec));
-  if (typeof startEpochMs !== "number"){
-    startEpochMs = Date.now();
-    saveState();
-    return Math.max(0, Math.floor(elapsedWhenStartedSec));
-  }
-  const deltaSec = (Date.now() - startEpochMs) / 1000;
-  return Math.max(0, Math.floor(elapsedWhenStartedSec + deltaSec));
-}
-function syncTimerUI(){
-  const sec = getElapsedSecondsNow();
-  timerEl.textContent = formatTimer(sec);
-
-  if (running && !halfTimeTriggered && sec >= HALF_TIME_SECONDS){
-    halfTimeTriggered = true;
-    saveState();
-    pauseTimerAt(sec);
-  }
-}
-function startUiInterval(){
-  if (uiInterval) clearInterval(uiInterval);
-  uiInterval = setInterval(syncTimerUI, 250);
-}
-function stopUiInterval(){
-  if (uiInterval){ clearInterval(uiInterval); uiInterval = null; }
-}
-function startTimer(){
-  if (running) return;
-  const current = getElapsedSecondsNow();
-  elapsedWhenStartedSec = current;
-  startEpochMs = Date.now();
-  running = true;
-  document.getElementById("startPauseBtn").textContent = "❚❚";
-  startUiInterval();
-  saveState();
-  syncTimerUI();
-}
-function pauseTimerAt(secNow){
-  running = false;
-  elapsedWhenStartedSec = secNow;
-  startEpochMs = null;
-  document.getElementById("startPauseBtn").textContent = "▶";
-  stopUiInterval();
-  saveState();
-  syncTimerUI();
-}
-function pauseTimer(){ pauseTimerAt(getElapsedSecondsNow()); }
-document.getElementById("startPauseBtn").onclick = () => running ? pauseTimer() : startTimer();
-
-function parseTimeToSeconds(input){
-  const raw = String(input || "").trim();
-  if (!raw) return null;
-
-  if (/^\d+$/.test(raw)){
-    const m = parseInt(raw,10);
-    if (Number.isNaN(m) || m < 0) return null;
-    return m * 60;
-  }
-  const match = raw.match(/^(\d+)\s*:\s*(\d{1,2})$/);
-  if (!match) return null;
-
-  const mm = parseInt(match[1],10);
-  const ss = parseInt(match[2],10);
-  if (Number.isNaN(mm) || Number.isNaN(ss) || mm < 0 || ss < 0 || ss > 59) return null;
-
-  return mm * 60 + ss;
-}
-
-timerEl.onclick = () => {
-  const current = getElapsedSecondsNow();
-  document.getElementById("timeInput").value = formatTimer(current);
-  document.getElementById("timePopupBg").style.display = "flex";
-  setTimeout(() => document.getElementById("timeInput").focus(), 0);
-};
-function closeTimePopup(){ document.getElementById("timePopupBg").style.display = "none"; }
-function confirmTimeSet(){
-  const sec = parseTimeToSeconds(document.getElementById("timeInput").value);
-  if (sec === null){ showMessage("Ongeldige tijd", "Gebruik mm:ss (bv. 18:30) of enkel minuten (bv. 63)."); return; }
-
-  if (sec < HALF_TIME_SECONDS) halfTimeTriggered = false;
-
-  if (running){
-    elapsedWhenStartedSec = sec;
-    startEpochMs = Date.now();
-  } else {
-    elapsedWhenStartedSec = sec;
-  }
-  saveState();
-  syncTimerUI();
-  closeTimePopup();
-}
-
-document.addEventListener("visibilitychange", () => { if (!document.hidden) syncTimerUI(); });
-window.addEventListener("pageshow", () => syncTimerUI());
-
-/* -------------------- GOAL POPUP -------------------- */
-let currentTeam = "";
-function openGoalPopup(team){
-  currentTeam = team;
-  const tLabel = (team === "home") ? teamHomeName : teamAwayName;
-  document.getElementById("goalPopupTitle").textContent = `Goal ${tLabel} - rugnummer`;
-
-  document.getElementById("goalPopupBg").style.display = "flex";
-  document.getElementById("goalNumberInput").value = "";
-  document.getElementById("goalOgCheck").checked = false;
-  document.getElementById("goalPenCheck").checked = false;
-  setTimeout(() => document.getElementById("goalNumberInput").focus(), 0);
-}
-function closeGoalPopup(){ document.getElementById("goalPopupBg").style.display = "none"; }
-function confirmGoal(){
-  const nr = String(document.getElementById("goalNumberInput").value || "").trim();
-  if (!nr){ showMessage("Invoer ontbreekt", "Geef een rugnummer in."); return; }
-
-  let isOG = document.getElementById("goalOgCheck").checked;
-  let isPenalty = document.getElementById("goalPenCheck").checked;
-  if (isOG && isPenalty) isPenalty = false;
-
-  const timeSec = getElapsedSecondsNow();
-  items.push({ type:"goal", timeSec, team: currentTeam, number: nr, isOG, isPenalty });
-
-  recomputeScore();
-  updateScoreboard();
-  rebuildLog();
-  saveState();
-  closeGoalPopup();
-}
-
-/* -------------------- SUB POPUP -------------------- */
-function openSubPopup(){
-  document.getElementById("subPopupBg").style.display = "flex";
-  document.getElementById("subOutInput").value = "";
-  document.getElementById("subInInput").value = "";
-  setTimeout(() => document.getElementById("subOutInput").focus(), 0);
-}
-function closeSubPopup(){ document.getElementById("subPopupBg").style.display = "none"; }
-function confirmSub(){
-  const outVal = String(document.getElementById("subOutInput").value || "").trim();
-  const inVal  = String(document.getElementById("subInInput").value || "").trim();
-  if (!outVal){ showMessage("Invoer ontbreekt", "Geef een rugnummer UIT in."); return; }
-  if (!inVal){ showMessage("Invoer ontbreekt", "Geef een rugnummer IN in."); return; }
-
-  const timeSec = getElapsedSecondsNow();
-  items.push({ type:"sub", timeSec, out: outVal, in: inVal });
-
-  rebuildLog();
-  saveState();
-  closeSubPopup();
-}
-document.getElementById("subBtn").addEventListener("click", openSubPopup);
-
-/* -------------------- CARDS -------------------- */
-let currentCardType = "yellow";
-function openCardPopup(type){
-  currentCardType = type;
-  document.getElementById("cardTitle").textContent = (type === "red") ? "Rode kaart" : "Gele kaart";
-  document.getElementById("cardHint").textContent = "Geef het rugnummer van de speler.";
-  document.getElementById("cardNumberInput").value = "";
-  document.getElementById("cardTeamSelect").value = "home";
-  document.getElementById("cardPopupBg").style.display = "flex";
-  setTimeout(() => document.getElementById("cardNumberInput").focus(), 0);
-}
-function closeCardPopup(){ document.getElementById("cardPopupBg").style.display = "none"; }
-function confirmCard(){
-  const nr = String(document.getElementById("cardNumberInput").value || "").trim();
-  if (!nr){ showMessage("Invoer ontbreekt", "Geef een rugnummer in."); return; }
-
-  const team = document.getElementById("cardTeamSelect").value;
-  const timeSec = getElapsedSecondsNow();
-  items.push({ type:"card", timeSec, team, card: currentCardType, number: nr });
-
-  rebuildLog();
-  saveState();
-  closeCardPopup();
-}
-document.getElementById("yellowBtn").addEventListener("click", () => openCardPopup("yellow"));
-document.getElementById("redBtn").addEventListener("click", () => openCardPopup("red"));
-
-/* -------------------- NEW MATCH -------------------- */
-function openNewMatchPopup(){
-  document.getElementById("newMatchPopupBg").style.display = "flex";
-  document.getElementById("newHomeName").value = teamHomeName;
-  document.getElementById("newAwayName").value = teamAwayName;
-  setTimeout(() => document.getElementById("newHomeName").focus(), 0);
-}
-function closeNewMatchPopup(){ document.getElementById("newMatchPopupBg").style.display = "none"; }
-function confirmNewMatch(){
-  let h = String(document.getElementById("newHomeName").value || "").trim();
-  let a = String(document.getElementById("newAwayName").value || "").trim();
-  if (!h) h = "THUIS";
-  if (!a) a = "UIT";
-
-  running = false;
-  elapsedWhenStartedSec = 0;
-  startEpochMs = null;
-  if (uiInterval){ clearInterval(uiInterval); uiInterval = null; }
-
-  halfTimeTriggered = false;
-  items = [];
-  home = 0; away = 0;
-
-  teamHomeName = h;
-  teamAwayName = a;
-
-  updateTeamUI();
-  updateScoreboard();
-  rebuildLog();
-
-  timerEl.textContent = "00:00";
-  document.getElementById("startPauseBtn").textContent = "▶";
-
-  saveState();
-  closeNewMatchPopup();
-}
-document.getElementById("newMatchBtn").addEventListener("click", openNewMatchPopup);
-
-/* -------------------- EDIT/DELETE -------------------- */
-let editIndex = null;
-function editItem(index){
-  editIndex = index;
-  const it = items[index];
-
-  document.getElementById("editTime").value = formatTime(it.timeSec);
-
-  const isGoal = it.type === "goal";
-  const isSub  = it.type === "sub";
-  const isCard = it.type === "card";
-
-  document.getElementById("editTitle").textContent =
-    isGoal ? "Wijzig doelpunt" : (isSub ? "Wijzig wissel" : "Wijzig kaart");
-
-  document.getElementById("editTeamWrap").style.display = isGoal ? "block" : "none";
-  document.getElementById("editNumberWrap").style.display = isGoal ? "block" : "none";
-  document.getElementById("editGoalExtrasWrap").style.display = isGoal ? "block" : "none";
-  document.getElementById("editSubWrap").style.display = isSub ? "block" : "none";
-  document.getElementById("editCardWrap").style.display = isCard ? "block" : "none";
-
-  if (isGoal){
-    document.getElementById("editTeam").value = it.team;
-    document.getElementById("editNumber").value = String(it.number ?? "");
-    document.getElementById("editOgCheck").checked = !!it.isOG;
-    document.getElementById("editPenCheck").checked = !!it.isPenalty;
-  } else if (isSub){
-    document.getElementById("editOut").value = String(it.out ?? "");
-    document.getElementById("editIn").value = String(it.in ?? "");
-  } else if (isCard){
-    document.getElementById("editCardType").value = it.card;
-    document.getElementById("editCardNumber").value = String(it.number ?? "");
-    document.getElementById("editCardTeam").value = it.team || "home";
-  }
-
-  document.getElementById("editPopupBg").style.display = "flex";
-  setTimeout(() => document.getElementById("editTime").focus(), 0);
-}
-function closeEditPopup(){ document.getElementById("editPopupBg").style.display = "none"; }
-function saveEdit(){
-  const it = items[editIndex];
-  const newTimeSec = parseTimeToSeconds(document.getElementById("editTime").value);
-  if (newTimeSec === null){ showMessage("Ongeldige tijd", "Gebruik mm:ss (bv. 18:30) of enkel minuten (bv. 63)."); return; }
-
-  if (it.type === "goal"){
-    const newTeam = document.getElementById("editTeam").value;
-    const newNumber = String(document.getElementById("editNumber").value || "").trim();
-    let newIsOG = document.getElementById("editOgCheck").checked;
-    let newIsPenalty = document.getElementById("editPenCheck").checked;
-    if (newIsOG && newIsPenalty) newIsPenalty = false;
-    if (!newNumber){ showMessage("Invoer ontbreekt", "Geef een rugnummer in."); return; }
-
-    it.timeSec = newTimeSec;
-    it.team = newTeam;
-    it.number = newNumber;
-    it.isOG = newIsOG;
-    it.isPenalty = newIsPenalty;
-
-    recomputeScore();
-    updateScoreboard();
-    rebuildLog();
-    saveState();
-    closeEditPopup();
-    return;
-  }
-
-  if (it.type === "sub"){
-    const outVal = String(document.getElementById("editOut").value || "").trim();
-    const inVal  = String(document.getElementById("editIn").value || "").trim();
-    if (!outVal){ showMessage("Invoer ontbreekt", "Geef een rugnummer UIT in."); return; }
-    if (!inVal){ showMessage("Invoer ontbreekt", "Geef een rugnummer IN in."); return; }
-
-    it.timeSec = newTimeSec;
-    it.out = outVal;
-    it.in = inVal;
-
-    rebuildLog();
-    saveState();
-    closeEditPopup();
-    return;
-  }
-
-  if (it.type === "card"){
-    const type = document.getElementById("editCardType").value;
-    const nr = String(document.getElementById("editCardNumber").value || "").trim();
-    const team = document.getElementById("editCardTeam").value;
-    if (!nr){ showMessage("Invoer ontbreekt", "Geef een rugnummer in."); return; }
-
-    it.timeSec = newTimeSec;
-    it.card = (type === "red") ? "red" : "yellow";
-    it.number = nr;
-    it.team = (team === "away") ? "away" : "home";
-
-    rebuildLog();
-    saveState();
-    closeEditPopup();
-    return;
-  }
-}
-function deleteItem(index){
-  items.splice(index, 1);
-  recomputeScore();
-  updateScoreboard();
-  rebuildLog();
-  saveState();
-}
-
-/* -------------------- PDF -------------------- */
-function downloadPDF(){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-
-  const marginX = 40;
-  let y = 50;
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text("Wedstrijd Overzicht", marginX, y);
-
-  y += 24;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(12);
-
-  const dateOnly = new Date().toLocaleDateString("nl-BE");
-  doc.text(`Datum: ${dateOnly}`, marginX, y); y += 18;
-  doc.text(`Ploegen: ${teamHomeName} (thuis) vs ${teamAwayName} (uit)`, marginX, y); y += 18;
-  doc.text(`Eindstand: ${teamHomeName} ${home} - ${away} ${teamAwayName}`, marginX, y); y += 10;
-
-  const withIndex = items.map((it, idx) => ({...it, _idx: idx}));
-  withIndex.sort((a,b) => a.timeSec - b.timeSec || a._idx - b._idx);
-
-  let h = 0, a = 0;
-  const goalRows = [];
-  const subRows = [];
-  const cardRows = [];
-
-  for (const it of withIndex){
-    const tijd = matchMinuteForLog(it.timeSec) + "'";
-
-    if (it.type === "goal"){
-      const t = scoringTeamForGoal(it);
-      if (t === "home") h++; else a++;
-
-      const score = `${h}-${a}`;
-      const rug = `#${it.number}`;
-      const detailsRaw = goalDetailsLabel(it);
-      const details = detailsRaw ? detailsRaw.replace(" (","").replace(")","") : "-";
-
-      goalRows.push([tijd, score, rug, details]);
-    }
-    else if (it.type === "sub"){
-      subRows.push([tijd, `#${it.out}`, `#${it.in}`]);
-    }
-    else if (it.type === "card"){
-      const ploeg = (it.team === "away") ? teamAwayName : teamHomeName;
-      const cardName = (it.card === "red") ? "Rood" : "Geel";
-      cardRows.push([tijd, `${cardName} (${ploeg})`, `#${it.number}`]);
-    }
-  }
-
-  y += 14;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("Goals", marginX, y);
-
-  doc.autoTable({
-    startY: y + 10,
-    head: [["Tijd", "Score", "Rugnr", "Details"]],
-    body: goalRows.length ? goalRows : [["-", "-", "-", "-"]],
-    styles: { font: "helvetica", fontSize: 11, cellPadding: 6 },
-    headStyles: { fillColor: [30, 30, 30] },
-    margin: { left: marginX, right: marginX }
-  });
-
-  y = doc.lastAutoTable.finalY + 18;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("Wissels", marginX, y);
-
-  doc.autoTable({
-    startY: y + 10,
-    head: [["Tijd", "Uit", "In"]],
-    body: subRows.length ? subRows : [["-", "-", "-"]],
-    styles: { font: "helvetica", fontSize: 11, cellPadding: 6 },
-    headStyles: { fillColor: [30, 30, 30] },
-    margin: { left: marginX, right: marginX }
-  });
-
-  y = doc.lastAutoTable.finalY + 18;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("Kaarten", marginX, y);
-
-  doc.autoTable({
-    startY: y + 10,
-    head: [["Tijd", "Kaart", "Rugnr"]],
-    body: cardRows.length ? cardRows : [["-", "-", "-"]],
-    styles: { font: "helvetica", fontSize: 11, cellPadding: 6 },
-    headStyles: { fillColor: [30, 30, 30] },
-    margin: { left: marginX, right: marginX }
-  });
-
-  doc.save("wedstrijd.pdf");
-}
-
-/* OG & Penalty exclusief (UI) */
-(function bindExclusiveChecks(){
-  const goalOg = document.getElementById("goalOgCheck");
-  const goalPen = document.getElementById("goalPenCheck");
-  goalOg.addEventListener("change", function(){ if (this.checked) goalPen.checked = false; });
-  goalPen.addEventListener("change", function(){ if (this.checked) goalOg.checked = false; });
-
-  const editOg = document.getElementById("editOgCheck");
-  const editPen = document.getElementById("editPenCheck");
-  editOg.addEventListener("change", function(){ if (this.checked) editPen.checked = false; });
-  editPen.addEventListener("change", function(){ if (this.checked) editOg.checked = false; });
-})();
-
-/* -------------------- INSTALL PROMPT (Android + iOS fallback) -------------------- */
-const installBtn = document.getElementById("installBtn");
-let deferredPrompt = null;
-
-function isIOS(){
-  return /iphone|ipad|ipod/i.test(navigator.userAgent);
-}
-function isInStandaloneMode(){
-  return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
-}
-function isSafari(){
-  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-}
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if (!isInStandaloneMode()){
-    installBtn.style.display = "inline-flex";
-  }
-});
-
-installBtn.addEventListener("click", async () => {
-  if (deferredPrompt){
-    deferredPrompt.prompt();
-    const res = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    installBtn.style.display = "none";
-    if (res && res.outcome === "accepted"){
-      showMessage("Installatie", "TrackScore wordt geïnstalleerd.");
-    }
-    return;
-  }
-
-  if (isIOS() && !isInStandaloneMode()){
-    showMessage(
-      "Installeren op iPhone/iPad",
-      "Tik op de Deel-knop (⤴︎) in Safari en kies 'Zet op beginscherm'."
-    );
-  }
-});
-
-window.addEventListener("appinstalled", () => {
-  installBtn.style.display = "none";
-  deferredPrompt = null;
-});
-
-window.addEventListener("load", () => {
-  if (isIOS() && isSafari() && !isInStandaloneMode()){
-    installBtn.style.display = "inline-flex";
-  }
-});
-
-/* -------------------- Service Worker registratie + update melding -------------------- */
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", async () => {
-    try{
-      const reg = await navigator.serviceWorker.register("./sw.js");
-      window.addEventListener("focus", () => reg.update().catch(()=>{}));
-    }catch(e){
-      // silent
-    }
-  });
-}
-
-/* Anti per ongeluk sluiten/refresh (optioneel) */
-window.addEventListener("beforeunload", (e) => {
-  e.preventDefault();
-  e.returnValue = "";
-});
-
-/* INIT */
-(function init(){
-  loadState();
-  updateTeamUI();
-  recomputeScore();
-  updateScoreboard();
-  rebuildLog();
-
-  document.getElementById("startPauseBtn").textContent = running ? "❚❚" : "▶";
-  if (running) startUiInterval();
-  syncTimerUI();
-})();
-</script>
-
+  <script src="./js/pwa.js"></script>
 </body>
 </html>
