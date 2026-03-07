@@ -83,7 +83,9 @@
 
   /* ✅ App layout: header (vast) + scroll (midden) + footer (vast) */
   .app{
-    height: 100dvh;
+    height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
     display:flex;
     flex-direction: column;
 
@@ -453,6 +455,7 @@
   /* ✅ Scroll area: enkel dit stuk mag scrollen */
   .scrollArea{
     flex: 1 1 auto;
+    min-height: 0;
     overflow: auto;
     overflow-x: hidden; /* ✅ nooit horizontaal */
     -webkit-overflow-scrolling: touch;
@@ -523,6 +526,9 @@
   /* ✅ Footer: knop blijft onderaan zichtbaar */
   .footerBar{
     flex: 0 0 auto;
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
     padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
     min-width: 0;
   }
