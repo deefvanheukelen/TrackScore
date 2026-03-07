@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "TrackScore Suite",
   "short_name": "TrackScore",
   "start_url": "./",
@@ -7,6 +8,29 @@
   "background_color": "#0B1220",
   "theme_color": "#0B1220",
   "icons": [
-    { "src": "./img/icoon.png", "type": "image/png", "purpose": "any" }
+    {
+      "src": "./img/icoon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./img/icoon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./img/icoon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./img/icoon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
