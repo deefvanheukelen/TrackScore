@@ -7,23 +7,18 @@
   <meta name="theme-color" content="#0B1220" />
   <title>TrackScore Suite</title>
 
-  <!-- PWA -->
   <link rel="manifest" href="./manifest.webmanifest">
 
-  <!-- Favicons -->
   <link rel="icon" type="image/png" sizes="32x32" href="./img/icoon.png">
   <link rel="apple-touch-icon" href="./img/icoon.png">
 
-  <!-- iOS PWA (Safari) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="TrackScore">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
 
   <style>
     :root{
@@ -49,9 +44,7 @@
 
     body{
       margin:0;
-      height:100%;
-      overflow:hidden;
-      overflow-x:hidden;
+      min-height:100%;
       font-family: Manrope, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       letter-spacing:-0.01em;
       color:var(--text);
@@ -63,10 +56,11 @@
       -webkit-text-size-adjust:100%;
       -webkit-tap-highlight-color:transparent;
       overscroll-behavior:none;
+      overflow-x:hidden;
     }
 
     .app{
-      height:100dvh;
+      min-height:100dvh;
       display:flex;
       flex-direction:column;
       padding:
@@ -147,81 +141,11 @@
       opacity:.92;
     }
 
-    .neon-card{
-      position:relative;
-      overflow:hidden;
-      border-radius:var(--r22);
-      border:1px solid rgba(255,255,255,.10);
-      background:
-        radial-gradient(900px 200px at 50% -40%, rgba(255,255,255,.06), transparent 62%),
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
-      backdrop-filter:blur(14px);
-      box-shadow:
-        0 20px 60px rgba(0,0,0,.62),
-        inset 0 1px 0 rgba(255,255,255,.12);
-    }
-
-    .neon-card::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      border-radius:inherit;
-      padding:2px;
-      background:var(--_glowBorder, linear-gradient(90deg, rgba(34,211,238,.95), rgba(34,197,94,.75)));
-      -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-      -webkit-mask-composite:xor;
-      mask-composite:exclude;
-      opacity:.85;
-      pointer-events:none;
-    }
-
-    .neon-card::after{
-      content:"";
-      position:absolute;
-      inset:-40px -40px -70px -40px;
-      border-radius:inherit;
-      background:
-        radial-gradient(260px 120px at 50% 108%, var(--_glowSoft, rgba(34,211,238,.34)), transparent 65%),
-        radial-gradient(520px 260px at 50% 20%, rgba(255,255,255,.06), transparent 60%);
-      opacity:.85;
-      filter:blur(6px);
-      pointer-events:none;
-    }
-
     .homeWrap{
-      flex:1 1 auto;
-      overflow:auto;
-      overflow-x:hidden;
-      -webkit-overflow-scrolling:touch;
+      flex:0 0 auto;
+      overflow:visible;
       padding-bottom:14px;
       min-width:0;
-    }
-
-    .homeHero{
-      padding:18px 18px;
-      margin-bottom:14px;
-      --_glowBorder: linear-gradient(90deg, rgba(34,211,238,.95), rgba(34,197,94,.75));
-      --_glowSoft: rgba(34,211,238,.28);
-    }
-
-    .homeHero h1{
-      margin:0 0 8px;
-      font-size:clamp(24px, 7vw, 34px);
-      line-height:1.05;
-      font-weight:var(--w-bold);
-      letter-spacing:-0.02em;
-      text-shadow:0 10px 22px rgba(0,0,0,.28);
-    }
-
-    .homeHero p{
-      margin:0;
-      color:var(--muted);
-      font-weight:var(--w-regular);
-      line-height:1.45;
-      font-size:15px;
-      max-width:46ch;
     }
 
     .sectionLabel{
@@ -283,27 +207,6 @@
       transform-origin:center center;
     }
 
-    .moduleCaption{
-      margin-top:10px;
-      text-align:center;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.35;
-      font-weight:var(--w-medium);
-    }
-
-    .footerNote{
-      margin-top:16px;
-      padding:14px 16px;
-      border-radius:var(--r18);
-      border:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.4;
-      box-shadow:0 16px 34px rgba(0,0,0,.30);
-    }
-
     @media (max-width: 900px){
       :root{
         --module-max:230px;
@@ -318,76 +221,84 @@
 
       .container{
         max-width:560px;
+        padding:8px 10px;
       }
 
       .moduleGrid{
         grid-template-columns:1fr;
-        gap:4px;
+        gap:0;
+      }
+
+      .moduleLink{
+        width:100%;
+      }
+
+      .moduleImageWrap{
+        max-width:100%;
+        padding-inline:0;
+      }
+
+      .moduleImage{
+        width:96%;
+        max-width:none;
+        margin:0 auto;
+      }
+
+      /* Belangrijk:
+         als de PNG's veel transparante witruimte bevatten,
+         verkleint dit de zichtbare afstand op mobiel */
+      .moduleLink--soccer{
+        margin-bottom:-150px;
+      }
+
+      .moduleLink--darts{
+        margin-top:-18px;
+      }
+    }
+
+    @media (max-width: 480px){
+      .moduleImage{
+        width:98%;
+      }
+
+      .moduleLink--soccer{
+        margin-bottom:-80px;
+      }
+
+      .moduleLink--darts{
+        margin-top:-34px;
       }
     }
 
     @media (max-width: 390px){
       :root{
-        --module-max:190px;
         --module-radius:18px;
-      }
-
-      .container{
-        padding:8px 10px;
       }
 
       .brandlogoImg{
         height:24px;
       }
 
-      .moduleGrid{
-        gap:14px;
+      .sectionLabel{
+        margin-bottom:8px;
       }
 
-      .moduleImageWrap{
-        padding-inline:2px;
+      .moduleLink--soccer{
+        margin-bottom:-80px;
       }
 
-      .moduleCaption{
-        font-size:12.5px;
+      .moduleLink--darts{
+        margin-top:-46px;
       }
     }
 
     @media (max-width: 320px){
-      :root{
-        --module-max:156px;
-        --module-radius:16px;
+      .moduleLink--soccer{
+        margin-bottom:-54px;
       }
 
-      .homeHero{
-        padding:14px 14px;
-      }
-
-      .homeHero h1{
-        font-size:22px;
-      }
-
-      .homeHero p{
-        font-size:14px;
-      }
-
-      .sectionLabel{
-        margin-bottom:8px;
-        font-size:11px;
-      }
-
-      .moduleGrid{
-        gap:12px;
-      }
-    }
-
-    @media (max-width: 280px){
-      :root{
-        --module-max:min(100%, 136px);
-      }
-
-      .container{
-        padding:6px 8px;
+      .moduleLink--darts{
+        margin-top:-54px;
       }
     }
   </style>
@@ -418,7 +329,7 @@
         <div class="sectionLabel">Score registratie</div>
 
         <div class="moduleGrid">
-          <a class="moduleLink" href="./games/trackscore.html" aria-label="Open SoccerScore">
+          <a class="moduleLink moduleLink--soccer" href="./games/trackscore.html" aria-label="Open SoccerScore">
             <div class="moduleImageWrap">
               <img
                 class="moduleImage"
@@ -430,7 +341,7 @@
             </div>
           </a>
 
-          <a class="moduleLink" href="./games/dartscore.html" aria-label="Open DartScore">
+          <a class="moduleLink moduleLink--darts" href="./games/dartscore.html" aria-label="Open DartScore">
             <div class="moduleImageWrap">
               <img
                 class="moduleImage"
@@ -446,65 +357,65 @@
     </div>
   </div>
 
-
   <script>
-  const installBtn = document.getElementById("installBtn");
-  let deferredPrompt = null;
+    const installBtn = document.getElementById("installBtn");
+    let deferredPrompt = null;
 
-  function isIOS(){
-    return /iphone|ipad|ipod/i.test(navigator.userAgent);
-  }
-  function isInStandaloneMode(){
-    return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
-  }
-  function isSafari(){
-    return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  }
-
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    if (!isInStandaloneMode() && installBtn){
-      installBtn.style.display = "inline-flex";
-    }
-  });
-
-  installBtn?.addEventListener("click", async () => {
-    if (deferredPrompt){
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice.catch(() => null);
-      deferredPrompt = null;
-      installBtn.style.display = "none";
-      return;
+    function isIOS(){
+      return /iphone|ipad|ipod/i.test(navigator.userAgent);
     }
 
-    if (isIOS() && !isInStandaloneMode()){
-      alert("Tik in Safari op Deel en kies ‘Zet op beginscherm’.");
+    function isInStandaloneMode(){
+      return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
     }
-  });
 
-  window.addEventListener("appinstalled", () => {
-    if (installBtn) installBtn.style.display = "none";
-    deferredPrompt = null;
-  });
-
-  window.addEventListener("load", () => {
-    if (isIOS() && isSafari() && !isInStandaloneMode() && installBtn){
-      installBtn.style.display = "inline-flex";
+    function isSafari(){
+      return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     }
-  });
 
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", async () => {
-      try{
-        const reg = await navigator.serviceWorker.register("./sw.js");
-        window.addEventListener("focus", () => reg.update().catch(() => {}));
-      }catch(e){
-        console.warn("Service worker registratie mislukt.", e);
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!isInStandaloneMode() && installBtn){
+        installBtn.style.display = "inline-flex";
       }
     });
-  }
-  </script>
 
+    installBtn?.addEventListener("click", async () => {
+      if (deferredPrompt){
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice.catch(() => null);
+        deferredPrompt = null;
+        installBtn.style.display = "none";
+        return;
+      }
+
+      if (isIOS() && !isInStandaloneMode()){
+        alert("Tik in Safari op Deel en kies ‘Zet op beginscherm’.");
+      }
+    });
+
+    window.addEventListener("appinstalled", () => {
+      if (installBtn) installBtn.style.display = "none";
+      deferredPrompt = null;
+    });
+
+    window.addEventListener("load", () => {
+      if (isIOS() && isSafari() && !isInStandaloneMode() && installBtn){
+        installBtn.style.display = "inline-flex";
+      }
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try{
+          const reg = await navigator.serviceWorker.register("./sw.js");
+          window.addEventListener("focus", () => reg.update().catch(() => {}));
+        }catch(e){
+          console.warn("Service worker registratie mislukt.", e);
+        }
+      });
+    }
+  </script>
 </body>
 </html>
