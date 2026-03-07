@@ -83,14 +83,16 @@
 
   /* ✅ App layout: header (vast) + scroll (midden) + footer (vast) */
   .app{
-    height: 100dvh;
+    height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
     display:flex;
     flex-direction: column;
 
     padding:
       env(safe-area-inset-top)
       env(safe-area-inset-right)
-      0
+      env(safe-area-inset-bottom)
       env(safe-area-inset-left);
   }
 
@@ -468,6 +470,7 @@
   /* ✅ Scroll area: enkel dit stuk mag scrollen */
   .scrollArea{
     flex: 1 1 auto;
+    min-height: 0;
     overflow: auto;
     overflow-x: hidden; /* ✅ nooit horizontaal */
     -webkit-overflow-scrolling: touch;
@@ -538,7 +541,12 @@
   /* ✅ Footer: knop blijft onderaan zichtbaar */
   .footerBar{
     flex: 0 0 auto;
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
     padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(11,18,32,0), rgba(11,18,32,.88) 28%, rgba(11,18,32,.96) 100%);
+    backdrop-filter: blur(8px);
     min-width: 0;
   }
 
@@ -637,8 +645,56 @@
   .btn-cancel{ background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); color: var(--text); }
   .btn-danger{ background: linear-gradient(180deg, rgba(239,68,68,.92), rgba(239,68,68,.72)); color:#fff; }
 
+  @media (max-width: 560px){
+    .container{
+      padding: 8px 10px;
+    }
+
+    .top-row{
+      padding: 12px 12px;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .action-bar{
+      grid-template-columns: minmax(0, 1fr) 76px;
+      grid-template-areas:
+        "new start"
+        "cards cards";
+      gap: 8px;
+    }
+
+    #newMatchBtn{
+      grid-area: new;
+      padding: 12px;
+    }
+
+    #startPauseBtn{
+      grid-area: start;
+      font-size: 38px;
+    }
+
+    .right-actions{
+      grid-area: cards;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      justify-content: stretch;
+      width: 100%;
+    }
+
+    #subBtn,
+    #yellowBtn,
+    #redBtn{
+      width: 100%;
+      justify-self: stretch;
+    }
+
+    .goal-btn{
+      padding: 15px 0;
+    }
+  }
+
   @media (max-width: 390px){
-    #startPauseBtn{ font-size: 40px; }
+    #startPauseBtn{ font-size: 34px; }
     .brandlogoImg{ height: 24px; }
     #logTable col.col-min{ width: 56px; }
     #logTable col.col-score{ width: 68px; }
@@ -681,7 +737,7 @@
     <div class="action-bar">
       <button id="newMatchBtn" type="button">
         <img src="reset.svg" alt="" class="btn-icon">
-        <span class="btn-text"><small>Reset wedstrijd</small></span>
+        <span class="btn-text"></span>
       </button>
 
       <button id="startPauseBtn" type="button" aria-label="Start of pauze">▶</button>
