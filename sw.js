@@ -1,55 +1,71 @@
-/* Simple cache-first SW for the whole suite */
-const CACHE_NAME = "trackscore-suite-v1";
+/* GitHub Pages vriendelijke service worker */
+const CACHE_NAME = "trackscore-suite-v2";
 const CORE_ASSETS = [
   "./",
   "./index.html",
-  "./css/app.css",
-  "./css/dartscore.css",
-  "./js/pwa.js",
-  "./js/trackscore.js",
-  "./js/dartscore.js",
-  "./games/trackscore.html",
-  "./games/dartscore.html",
   "./manifest.webmanifest",
-  "./img/icoon-192.png",
-  "./img/icoon-512.png",
   "./img/icoon.png",
   "./img/logo.png",
-  "./reset.svg",
-  "./wissel.svg"
+  "./img/dartscore.png",
+  "./img/soccerscore.png",
+  "./games/trackscore.html",
+  "./games/dartscore.html",
+  "./games/reset.svg",
+  "./games/wissel.svg"
 ];
+
+async function cacheCoreAssets() {
+  const cache = await caches.open(CACHE_NAME);
+
+  await Promise.allSettled(
+    CORE_ASSETS.map(async (asset) => {
+      const request = new Request(asset, { cache: "reload" });
+      const response = await fetch(request);
+      if (response.ok) {
+        await cache.put(asset, response);
+      }
+    })
+  );
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).then(()=>self.skipWaiting())
+    cacheCoreAssets().then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.map(k => (k===CACHE_NAME)?null:caches.delete(k))))
-      .then(()=>self.clients.claim())
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => key === CACHE_NAME ? null : caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  const url = new URL(req.url);
+  if (req.method !== "GET") return;
 
-  // Only handle same-origin
+  const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req).then((res) => {
-        if (req.method === "GET" && res.ok){
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, copy)).catch(()=>{});
-        }
-        return res;
-      }).catch(()=> cached);
-    })
-  );
+  event.respondWith((async () => {
+    const cached = await caches.match(req, { ignoreSearch: true });
+    if (cached) return cached;
+
+    try {
+      const response = await fetch(req);
+      if (response && response.ok) {
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(req, response.clone()).catch(() => {});
+      }
+      return response;
+    } catch (error) {
+      if (req.mode === "navigate") {
+        const fallback = await caches.match("./index.html");
+        if (fallback) return fallback;
+      }
+      throw error;
+    }
+  })());
 });

@@ -9,11 +9,11 @@
 <title>TrackScore</title>
 
 <!-- PWA -->
-<link rel="manifest" href="./manifest.webmanifest">
+<link rel="manifest" href="../manifest.webmanifest">
 
 <!-- Favicons -->
-<link rel="icon" type="image/png" sizes="32x32" href="img/icoon-192.png">
-<link rel="apple-touch-icon" href="img/icoon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../img/icoon.png">
+<link rel="apple-touch-icon" href="../img/icoon.png">
 
 <!-- iOS PWA (Safari) -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -657,8 +657,8 @@
   <!-- ✅ VASTE HEADER (niet scrollen) -->
   <div class="container">
     <div class="brandbar" aria-label="TrackScore">
-      <img class="brandiconImg" src="img/icoon.png" alt="TrackScore icoon">
-      <img class="brandlogoImg" src="img/logo.png" alt="TrackScore">
+      <img class="brandiconImg" src="../img/icoon.png" alt="TrackScore icoon">
+      <img class="brandlogoImg" src="../img/logo.png" alt="TrackScore">
     </div>
 
     <div class="installRow">
@@ -1614,7 +1614,7 @@ window.addEventListener("load", () => {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try{
-      const reg = await navigator.serviceWorker.register("./sw.js");
+      const reg = await navigator.serviceWorker.register("../sw.js", { scope: "../" });
       window.addEventListener("focus", () => reg.update().catch(()=>{}));
     }catch(e){
       // silent

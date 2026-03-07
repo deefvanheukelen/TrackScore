@@ -11,8 +11,8 @@
   <link rel="manifest" href="./manifest.webmanifest">
 
   <!-- Favicons -->
-  <link rel="icon" type="image/png" sizes="32x32" href="img/icoon-192.png">
-  <link rel="apple-touch-icon" href="img/icoon-192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./img/icoon.png">
+  <link rel="apple-touch-icon" href="./img/icoon.png">
 
   <!-- iOS PWA (Safari) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,7 +24,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./css/app.css" />
 
   <style>
     :root{
@@ -398,8 +397,8 @@
   <div class="app">
     <div class="container">
       <div class="brandbar" aria-label="TrackScore Suite">
-        <img class="brandiconImg" src="img/icoon.png" alt="TrackScore icoon">
-        <img class="brandlogoImg" src="img/logo.png" alt="TrackScore">
+        <img class="brandiconImg" src="./img/icoon.png" alt="TrackScore icoon">
+        <img class="brandlogoImg" src="./img/logo.png" alt="TrackScore">
       </div>
 
       <div class="installRow">
@@ -423,7 +422,7 @@
             <div class="moduleImageWrap">
               <img
                 class="moduleImage"
-                src="img/soccerscore.png"
+                src="./img/soccerscore.png"
                 alt="SoccerScore module"
                 loading="eager"
                 decoding="async"
@@ -435,7 +434,7 @@
             <div class="moduleImageWrap">
               <img
                 class="moduleImage"
-                src="img/dartscore.png"
+                src="./img/dartscore.png"
                 alt="DartScore module"
                 loading="eager"
                 decoding="async"
@@ -447,6 +446,65 @@
     </div>
   </div>
 
-  <script src="./js/pwa.js"></script>
+
+  <script>
+  const installBtn = document.getElementById("installBtn");
+  let deferredPrompt = null;
+
+  function isIOS(){
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }
+  function isInStandaloneMode(){
+    return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+  }
+  function isSafari(){
+    return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  }
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!isInStandaloneMode() && installBtn){
+      installBtn.style.display = "inline-flex";
+    }
+  });
+
+  installBtn?.addEventListener("click", async () => {
+    if (deferredPrompt){
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice.catch(() => null);
+      deferredPrompt = null;
+      installBtn.style.display = "none";
+      return;
+    }
+
+    if (isIOS() && !isInStandaloneMode()){
+      alert("Tik in Safari op Deel en kies ‘Zet op beginscherm’.");
+    }
+  });
+
+  window.addEventListener("appinstalled", () => {
+    if (installBtn) installBtn.style.display = "none";
+    deferredPrompt = null;
+  });
+
+  window.addEventListener("load", () => {
+    if (isIOS() && isSafari() && !isInStandaloneMode() && installBtn){
+      installBtn.style.display = "inline-flex";
+    }
+  });
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", async () => {
+      try{
+        const reg = await navigator.serviceWorker.register("./sw.js");
+        window.addEventListener("focus", () => reg.update().catch(() => {}));
+      }catch(e){
+        console.warn("Service worker registratie mislukt.", e);
+      }
+    });
+  }
+  </script>
+
 </body>
 </html>
