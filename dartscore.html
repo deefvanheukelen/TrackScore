@@ -1,0 +1,2215 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>DartScore</title>
+  <style>
+    :root{
+      --bg:#081018;
+      --text:#e9f0f6;
+      --muted:#8aa0b2;
+      --accent:#2ad66d;
+      --danger:#ff5a5a;
+      --info:#7dc7ff;
+      --warning:#ffd24d;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --radius2:22px;
+      --safeBottom: env(safe-area-inset-bottom, 0px);
+      --safeTop: env(safe-area-inset-top, 0px);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 900px at 30% 10%, rgba(46, 214, 110, .08), transparent 55%),
+                  radial-gradient(900px 700px at 90% 30%, rgba(72, 120, 255, .08), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      height:100svh;
+      overflow:hidden;
+      display:flex;
+      justify-content:center;
+    }
+
+    .shell{
+      width:100%;
+      max-width: 480px;
+      height:100svh;
+    }
+    @media (min-width: 900px){
+      .shell{
+        height: calc(100svh - 24px);
+        margin: 12px 0;
+        border-radius: 26px;
+        overflow:hidden;
+        box-shadow: 0 18px 60px rgba(0,0,0,.55);
+        border:1px solid rgba(255,255,255,.06);
+        background: rgba(0,0,0,.10);
+        backdrop-filter: blur(8px);
+      }
+    }
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding-top: calc(10px + var(--safeTop));
+    }
+
+    .topbar{
+      padding: 8px 14px 10px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .gameLine{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:14px;
+      color:var(--muted);
+      user-select:none;
+      flex-wrap:wrap;
+    }
+
+    .gameBtn{
+      border:none;
+      background:transparent;
+      color:var(--text);
+      font-weight:700;
+      letter-spacing:.3px;
+      padding:0;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .caret{opacity:.8; font-size:12px; transform: translateY(1px);}
+
+    .phaseBadge{
+      display:none;
+      padding:4px 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      color: var(--text);
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.3px;
+    }
+
+    .toggles{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+      user-select:none;
+    }
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 8px;
+      border-radius:999px;
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .toggle input{accent-color: var(--accent);}
+
+    .content{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      flex:1;
+      padding: 0 14px 0;
+      gap:10px;
+    }
+
+    .players{
+      background: rgba(255,255,255,.02);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height:0;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .playersScroll{
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      padding: 10px 10px 8px;
+      min-height:0;
+      flex:1;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(233,240,246,.22) transparent;
+    }
+    .playersScroll::-webkit-scrollbar{ width:8px; height:8px; }
+    .playersScroll::-webkit-scrollbar-track{ background: transparent; }
+    .playersScroll::-webkit-scrollbar-thumb{
+      background: rgba(233,240,246,.16);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+    .playersScroll::-webkit-scrollbar-thumb:hover{
+      background: rgba(233,240,246,.26);
+      background-clip: content-box;
+    }
+
+    .emptyState{
+      padding: 18px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+      border:1px dashed rgba(255,255,255,.12);
+      color: rgba(233,240,246,.65);
+      line-height:1.35;
+      font-weight:700;
+      user-select:none;
+    }
+
+    .playerRow, .cricketRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 14px;
+    }
+
+    .playerRow:not(.active),
+    .cricketRow:not(.active){
+      opacity:.55;
+      filter: grayscale(1);
+    }
+    .playerRow.active, .cricketRow.active{
+      background: rgba(42, 214, 109, .07);
+      border:1px solid rgba(42, 214, 109, .18);
+      opacity: 1;
+      filter:none;
+    }
+
+    .rowBtns{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex:0 0 auto;
+      margin-top:6px;
+    }
+    .iconBtn{
+      width:34px;
+      height:30px;
+      border:none;
+      border-radius: 12px;
+      cursor:pointer;
+      user-select:none;
+      touch-action: manipulation;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      color: rgba(233,240,246,.92);
+    }
+    .iconBtn:active{ transform: translateY(1px); }
+    .iconBtn.danger{
+      background: rgba(255,90,90,.14);
+      border-color: rgba(255,90,90,.18);
+    }
+    .icon{
+      width:16px; height:16px;
+      display:block;
+      fill:none;
+      stroke: currentColor;
+      stroke-width:2.3;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    .crLeft{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:120px;
+      flex:0 0 auto;
+    }
+    .crName{
+      font-size:22px;
+      font-weight:950;
+      line-height:1.05;
+    }
+
+    .roleTag{
+      display:inline-flex;
+      align-items:center;
+      width:max-content;
+      max-width:100%;
+      padding:4px 9px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:950;
+      letter-spacing:.3px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      color:rgba(233,240,246,.9);
+    }
+    .roleTag.scorer{
+      color:#7fe8a0;
+      border-color: rgba(42,214,109,.22);
+      background: rgba(42,214,109,.10);
+    }
+    .roleTag.closer{
+      color:#ffb3b3;
+      border-color: rgba(255,90,90,.22);
+      background: rgba(255,90,90,.10);
+    }
+
+    .crMarks{
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-end;
+      gap:10px;
+      flex:1;
+      min-width:0;
+      color:var(--muted);
+      font-weight:750;
+      font-size:12px;
+      padding-top: 2px;
+    }
+    .crNum{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:4px;
+      width:30px;
+      flex:0 0 30px;
+      opacity:.85;
+    }
+    .crNum .n{ font-variant-numeric: tabular-nums; }
+    .crNum.closed .n{ color: rgba(42,214,109,.95); }
+    .crNum.allClosed .n{ color: rgba(255,90,90,.95); }
+
+    .dots{
+      display:flex;
+      gap:3px;
+      height:10px;
+      align-items:center;
+      justify-content:center;
+    }
+    .dot{
+      width:6px;
+      height:6px;
+      border-radius:999px;
+      background: rgba(233,240,246,.18);
+    }
+    .dot.filled{
+      width:7px;
+      height:7px;
+      background: rgba(42, 214, 109, .95);
+      box-shadow: 0 0 0 2px rgba(42,214,109,.12);
+    }
+    .crNum.allClosed .dot.filled{
+      background: rgba(255,90,90,.95);
+      box-shadow: 0 0 0 2px rgba(255,90,90,.14);
+    }
+
+    .crScore{
+      min-width:58px;
+      text-align:right;
+      font-size:26px;
+      font-weight:950;
+      color: var(--accent);
+      letter-spacing:.4px;
+      padding-top:2px;
+    }
+    .crTarget{
+      display:block;
+      font-size:11px;
+      color: var(--muted);
+      font-weight:800;
+      margin-top:2px;
+    }
+
+    .turnLineWrap{
+      padding: 8px 10px 10px;
+      border-top:1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.08);
+      backdrop-filter: blur(8px);
+    }
+    .turnLine{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      font-variant-numeric: tabular-nums;
+      user-select:none;
+    }
+    .turnLeft{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      min-width:0;
+    }
+    .turnHash{
+      width:40px;
+      color:rgba(233,240,246,.75);
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .turnThrows{
+      display:flex;
+      align-items:baseline;
+      gap:22px;
+      color:rgba(233,240,246,.85);
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .throwCell{ width:40px; text-align:center; }
+    .turnSum{
+      margin-left:auto;
+      width:52px;
+      text-align:right;
+      color:rgba(233,240,246,.8);
+      font-weight:900;
+    }
+
+    .keypad{
+      padding: 10px 14px calc(12px + var(--safeBottom));
+    }
+    .pad{
+      background: rgba(255,255,255,.02);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius2);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      position:relative;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap:10px;
+      padding: 4px 2px 10px;
+      align-items:stretch;
+    }
+    .numBtn{
+      border:none;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      color: rgba(233,240,246,.9);
+      border-radius: 12px;
+      padding: 10px 0;
+      font-weight:900;
+      font-size:15px;
+      letter-spacing:.2px;
+      cursor:pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,.20);
+      user-select:none;
+      touch-action: manipulation;
+      min-height: 40px;
+    }
+    .numBtn:active{ transform: translateY(1px); }
+    .numBtn.disabled{
+      opacity:.22;
+      cursor:not-allowed;
+      filter: grayscale(1);
+    }
+    .numBtn.selected{
+      outline:2px solid rgba(42,214,109,.85);
+      background: rgba(42,214,109,.14);
+    }
+    .numBtn.xBtn{
+      grid-column: 7 / 8;
+      grid-row: 4 / 5;
+    }
+
+    .dtPop{
+      position:absolute;
+      display:none;
+      gap:10px;
+      padding:9px;
+      border-radius: 16px;
+      background: rgba(12, 22, 32, .96);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 14px 34px rgba(0,0,0,.45);
+      z-index:20;
+      backdrop-filter: blur(12px);
+      transform: translate(-50%, -58px);
+    }
+    .dtPop.show{ display:flex; }
+    .dtBtn{
+      width:44px;
+      height:38px;
+      border:none;
+      border-radius: 12px;
+      font-weight:950;
+      cursor:pointer;
+      background: rgba(42,214,109,.18);
+      color: rgba(233,240,246,1);
+      box-shadow: 0 8px 18px rgba(0,0,0,.22);
+      user-select:none;
+      touch-action: manipulation;
+    }
+    .dtBtn.secondary{ background: rgba(255,255,255,.10); }
+    .dtBtn.hidden{ display:none; }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding-top: 6px;
+    }
+    .act{
+      flex:1;
+      border:none;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      color: rgba(233,240,246,.95);
+      border-radius: 16px;
+      height:46px;
+      font-weight:900;
+      font-size:18px;
+      cursor:pointer;
+      user-select:none;
+      touch-action: manipulation;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+    }
+    .act:active{ transform: translateY(1px); }
+    .act.primary{
+      background: rgba(42,214,109,.16);
+      border-color: rgba(42,214,109,.22);
+    }
+    .act.danger{
+      background: rgba(255,90,90,.14);
+      border-color: rgba(255,90,90,.18);
+    }
+    .act.ready{
+      background: rgba(255, 210, 77, .18);
+      border-color: rgba(255, 210, 77, .45);
+      color: #fff6d1;
+      box-shadow:
+        0 0 0 1px rgba(255, 210, 77, .18),
+        0 0 22px rgba(255, 210, 77, .18),
+        0 8px 22px rgba(0,0,0,.25);
+      animation: readyPulse 1s ease-in-out infinite;
+    }
+    @keyframes readyPulse{
+      0%,100%{
+        transform: scale(1);
+        box-shadow:
+          0 0 0 1px rgba(255, 210, 77, .18),
+          0 0 18px rgba(255, 210, 77, .12),
+          0 8px 22px rgba(0,0,0,.25);
+      }
+      50%{
+        transform: scale(1.03);
+        box-shadow:
+          0 0 0 1px rgba(255, 210, 77, .28),
+          0 0 28px rgba(255, 210, 77, .25),
+          0 10px 28px rgba(0,0,0,.32);
+      }
+    }
+
+    .plusGlyph{
+      font-size:28px;
+      font-weight:950;
+      line-height:1;
+      transform: translateY(-1px);
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:flex-start;
+      justify-content:center;
+      z-index:100;
+    }
+    .overlay.show{ display:flex; }
+
+    .modal{
+      width:min(360px, calc(100% - 28px));
+      background: rgba(10,18,26,.96);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      margin-top: calc(70px + var(--safeTop));
+      backdrop-filter: blur(10px);
+    }
+    .modal .mHead{
+      padding:14px 14px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .modal h3{
+      margin:0;
+      font-size:14px;
+      color:var(--muted);
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .mClose{
+      width:34px;
+      height:30px;
+      border:none;
+      border-radius: 12px;
+      cursor:pointer;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      color: rgba(233,240,246,.92);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .mClose:active{ transform: translateY(1px); }
+
+    .mBody{ padding: 14px; }
+    .mText{
+      color: rgba(233,240,246,.88);
+      font-weight:800;
+      line-height:1.35;
+      margin: 0 0 12px 0;
+    }
+
+    .opt{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding: 14px;
+      border-top:1px solid rgba(255,255,255,.06);
+      cursor:pointer;
+      user-select:none;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+    .opt small{ color: var(--muted); font-weight:700; }
+    .opt:active{ background: rgba(255,255,255,.05); }
+
+    .hint{
+      font-size:12px;
+      color:rgba(233,240,246,.42);
+      padding: 0 14px 8px;
+      user-select:none;
+      line-height:1.35;
+    }
+
+    .form{
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .label{
+      font-size:12px;
+      color: rgba(233,240,246,.55);
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .input{
+      width:100%;
+      height:44px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color: rgba(233,240,246,.95);
+      padding: 0 12px;
+      font-weight:900;
+      font-size:16px;
+      outline:none;
+    }
+    .input:focus{
+      border-color: rgba(42,214,109,.35);
+      box-shadow: 0 0 0 3px rgba(42,214,109,.12);
+    }
+    .mActions, .formActions{
+      display:flex;
+      gap:10px;
+    }
+    .btn{
+      flex:1;
+      height:44px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: rgba(233,240,246,.95);
+      font-weight:950;
+      cursor:pointer;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: rgba(42,214,109,.16);
+      border-color: rgba(42,214,109,.22);
+    }
+    .btn.danger{
+      background: rgba(255,90,90,.14);
+      border-color: rgba(255,90,90,.18);
+    }
+
+    .fxOverlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.68);
+      z-index:500;
+      padding: 20px;
+    }
+    .fxOverlay.show{ display:flex; }
+
+    .fxCard{
+      min-width: min(360px, 100%);
+      max-width: 420px;
+      text-align:center;
+      background: rgba(10,18,26,.96);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      padding: 30px 24px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+    }
+    .fxTitle{
+      font-size: 38px;
+      font-weight: 1000;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .fxTitle.bust{ color: var(--danger); }
+    .fxTitle.win{ color: var(--accent); }
+    .fxTitle.info{ color: #7dc7ff; }
+    .fxSub{
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .fxHint{
+      margin-top:14px;
+      font-size:13px;
+      color:rgba(233,240,246,.55);
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+
+    @media (max-width: 520px){
+      .cricketRow{
+        flex-wrap:wrap;
+        align-items:flex-start;
+      }
+
+      .crLeft{
+        flex:1 1 calc(100% - 70px);
+        min-width:0;
+      }
+
+      .crScore{
+        flex:0 0 auto;
+        margin-left:auto;
+        padding-top:0;
+      }
+
+      .crMarks{
+        order:3;
+        width:100%;
+        flex:0 0 100%;
+        justify-content:space-between;
+        padding-top:8px;
+      }
+
+      .crNum{
+        width:auto;
+        flex:1 1 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="app">
+      <div class="topbar">
+        <div class="gameLine">
+          <span id="gameLabel">Game: 501</span>
+          <button class="gameBtn" id="gameBtn" aria-label="Kies game">
+            <span class="caret">▾</span>
+          </button>
+          <span class="phaseBadge" id="phaseBadge"></span>
+        </div>
+
+        <div class="toggles" id="togglesX01">
+          <label class="toggle">
+            <input type="checkbox" id="doubleIn" />
+            <span>double in</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="doubleOut" checked />
+            <span>double out</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="players" id="playersPanel">
+          <div class="playersScroll" id="playersScroll"></div>
+
+          <div class="turnLineWrap">
+            <div class="turnLine">
+              <div class="turnLeft">
+                <div class="turnHash" id="turnNo">#1</div>
+                <div class="turnThrows">
+                  <div class="throwCell" id="t1">-</div>
+                  <div class="throwCell" id="t2">-</div>
+                  <div class="throwCell" id="t3">-</div>
+                </div>
+              </div>
+              <div class="turnSum" id="turnSum">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="keypad">
+          <div class="pad" id="pad">
+            <div class="grid" id="grid"></div>
+
+            <div class="dtPop" id="dtPop">
+              <button class="dtBtn" id="btnD">D</button>
+              <button class="dtBtn secondary" id="btnT">T</button>
+            </div>
+
+            <div class="actions">
+              <button class="act" id="btnAddPlayer" title="Speler toevoegen" aria-label="Speler toevoegen">
+                <span class="plusGlyph">+</span>
+              </button>
+
+              <button class="act primary" id="btnPlayStop" title="Start spel">▶</button>
+
+              <button class="act" id="btnUndo" title="Undo">↩</button>
+              <button class="act" id="btnOk" title="Beurt afsluiten">✓</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint" id="hint"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlayGame">
+    <div class="modal">
+      <div class="mHead">
+        <h3>Kies game</h3>
+        <button class="mClose" data-close="overlayGame" aria-label="Sluiten">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="opt" data-game="301">301 <small>X01</small></div>
+      <div class="opt" data-game="501">501 <small>X01</small></div>
+      <div class="opt" data-game="CRICKET">CRICKET <small>15–20 & bull</small></div>
+      <div class="opt" data-game="SCRAM">SCRAM CRICKET <small>2 spelers</small></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlayPlayer">
+    <div class="modal">
+      <div class="mHead">
+        <h3 id="playerModalTitle">Speler</h3>
+        <button class="mClose" data-close="overlayPlayer" aria-label="Sluiten">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="form">
+        <div>
+          <div class="label">Naam</div>
+          <input class="input" id="playerNameInput" type="text" maxlength="24" placeholder="bv. Deef" />
+        </div>
+        <div class="formActions">
+          <button class="btn" id="playerCancel">Annuleer</button>
+          <button class="btn primary" id="playerSave">Opslaan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlayConfirm">
+    <div class="modal">
+      <div class="mHead">
+        <h3 id="confirmTitle">Bevestigen</h3>
+        <button class="mClose" data-close="overlayConfirm" aria-label="Sluiten">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="mBody">
+        <p class="mText" id="confirmText">Weet je het zeker?</p>
+        <div class="mActions">
+          <button class="btn" id="confirmCancel">Annuleer</button>
+          <button class="btn primary" id="confirmOk">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fxOverlay" id="fxOverlay">
+    <div class="fxCard">
+      <div class="fxTitle" id="fxTitle"></div>
+      <div class="fxSub" id="fxSub"></div>
+      <div class="fxHint" id="fxHint" style="display:none;">Tik om te sluiten</div>
+    </div>
+  </div>
+
+  <script>
+    const NUM_ORDER = [25,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1];
+    const CRICKET_NUMS = [25,20,19,18,17,16,15];
+
+    let state = {
+      game: 501,
+      doubleIn: false,
+      doubleOut: true,
+      players: [],
+      currentPlayer: 0,
+      turnIndex: 1,
+      currentThrows: [],
+      history: [],
+      started: false,
+      turnStartSnapshot: null,
+      scram: {
+        phase: 1,
+        targetScore: 0,
+        phase1ScorerIndex: 0,
+        phase1CloserIndex: 1
+      }
+    };
+
+    function makePlayer(name){
+      return {
+        name,
+        scoreX01: (state.game === "CRICKET" || state.game === "SCRAM") ? 0 : Number(state.game),
+        openedIn: false,
+        cricketScore: 0,
+        cricketMarks: Object.fromEntries(CRICKET_NUMS.map(n => [n, 0]))
+      };
+    }
+
+    function clonePlayerState(p){
+      return {
+        scoreX01: p.scoreX01,
+        openedIn: p.openedIn,
+        cricketScore: p.cricketScore,
+        cricketMarks: {...p.cricketMarks}
+      };
+    }
+
+    function cloneScramState(){
+      return {
+        phase: state.scram.phase,
+        targetScore: state.scram.targetScore,
+        phase1ScorerIndex: state.scram.phase1ScorerIndex,
+        phase1CloserIndex: state.scram.phase1CloserIndex
+      };
+    }
+
+    function saveTurnStartSnapshot(){
+      if (!state.players.length || state.currentPlayer >= state.players.length){
+        state.turnStartSnapshot = null;
+        return;
+      }
+      state.turnStartSnapshot = clonePlayerState(state.players[state.currentPlayer]);
+    }
+
+    function restoreCurrentPlayerToTurnStart(){
+      if (!state.players.length || !state.turnStartSnapshot) return;
+      const p = state.players[state.currentPlayer];
+      p.scoreX01 = state.turnStartSnapshot.scoreX01;
+      p.openedIn = state.turnStartSnapshot.openedIn;
+      p.cricketScore = state.turnStartSnapshot.cricketScore;
+      p.cricketMarks = {...state.turnStartSnapshot.cricketMarks};
+    }
+
+    function resetScramState(){
+      state.scram = {
+        phase: 1,
+        targetScore: 0,
+        phase1ScorerIndex: 0,
+        phase1CloserIndex: 1
+      };
+    }
+
+    function resetScoresForCurrentGame(){
+      state.turnIndex = 1;
+      state.currentPlayer = 0;
+      state.currentThrows = [];
+      state.history = [];
+      state.started = false;
+      state.turnStartSnapshot = null;
+      resetScramState();
+      hideDT();
+
+      if (state.game === "CRICKET" || state.game === "SCRAM"){
+        state.players.forEach(p=>{
+          p.cricketScore = 0;
+          p.cricketMarks = Object.fromEntries(CRICKET_NUMS.map(n => [n, 0]));
+          p.scoreX01 = 0;
+          p.openedIn = false;
+        });
+      } else {
+        const start = Number(state.game);
+        state.players.forEach(p=>{
+          p.scoreX01 = start;
+          p.openedIn = false;
+          p.cricketScore = 0;
+          p.cricketMarks = Object.fromEntries(CRICKET_NUMS.map(n => [n, 0]));
+        });
+      }
+      renderAll();
+    }
+
+    function resetForGame(game){
+      state.game = game;
+      resetScoresForCurrentGame();
+    }
+
+    const playersScroll = document.getElementById("playersScroll");
+    const gameLabel = document.getElementById("gameLabel");
+    const gameBtn = document.getElementById("gameBtn");
+    const phaseBadge = document.getElementById("phaseBadge");
+    const togglesX01 = document.getElementById("togglesX01");
+    const doubleInEl = document.getElementById("doubleIn");
+    const doubleOutEl = document.getElementById("doubleOut");
+
+    const grid = document.getElementById("grid");
+    const dtPop = document.getElementById("dtPop");
+    const btnD = document.getElementById("btnD");
+    const btnT = document.getElementById("btnT");
+
+    const turnNo = document.getElementById("turnNo");
+    const t1 = document.getElementById("t1");
+    const t2 = document.getElementById("t2");
+    const t3 = document.getElementById("t3");
+    const turnSum = document.getElementById("turnSum");
+    const hint = document.getElementById("hint");
+
+    const btnAddPlayer = document.getElementById("btnAddPlayer");
+    const btnUndo = document.getElementById("btnUndo");
+    const btnOk = document.getElementById("btnOk");
+    const btnPlayStop = document.getElementById("btnPlayStop");
+    const padEl = document.getElementById("pad");
+
+    const overlayGame = document.getElementById("overlayGame");
+    const overlayPlayer = document.getElementById("overlayPlayer");
+    const overlayConfirm = document.getElementById("overlayConfirm");
+
+    const playerModalTitle = document.getElementById("playerModalTitle");
+    const playerNameInput = document.getElementById("playerNameInput");
+    const playerCancel = document.getElementById("playerCancel");
+    const playerSave = document.getElementById("playerSave");
+
+    const confirmTitle = document.getElementById("confirmTitle");
+    const confirmText = document.getElementById("confirmText");
+    const confirmCancel = document.getElementById("confirmCancel");
+    const confirmOk = document.getElementById("confirmOk");
+
+    const fxOverlay = document.getElementById("fxOverlay");
+    const fxTitle = document.getElementById("fxTitle");
+    const fxSub = document.getElementById("fxSub");
+    const fxHint = document.getElementById("fxHint");
+
+    const fxState = {
+      closable: false,
+      onClose: null
+    };
+
+    function showOverlay(el){ el.classList.add("show"); }
+    function hideOverlay(el){ el.classList.remove("show"); }
+
+    document.querySelectorAll('[data-close]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.getAttribute('data-close');
+        const el = document.getElementById(id);
+        if (el) hideOverlay(el);
+      });
+    });
+
+    [overlayGame, overlayPlayer, overlayConfirm].forEach(ov=>{
+      ov.addEventListener("click", (e)=>{ if (e.target === ov) hideOverlay(ov); });
+    });
+
+    let confirmResolve = null;
+    function openConfirm({title="Bevestigen", text="Weet je het zeker?", okText="OK", okKind="primary"}){
+      confirmTitle.textContent = title;
+      confirmText.textContent = text;
+      confirmOk.textContent = okText;
+      confirmOk.classList.remove("primary","danger");
+      confirmOk.classList.add(okKind);
+      showOverlay(overlayConfirm);
+      return new Promise((resolve)=>{ confirmResolve = resolve; });
+    }
+    function closeConfirm(){
+      hideOverlay(overlayConfirm);
+      confirmResolve = null;
+    }
+    confirmCancel.addEventListener("click", ()=>{ if (confirmResolve) confirmResolve(false); closeConfirm(); });
+    confirmOk.addEventListener("click", ()=>{ if (confirmResolve) confirmResolve(true); closeConfirm(); });
+
+    function buildGrid(){
+      grid.innerHTML = "";
+      NUM_ORDER.forEach((n, idx)=>{
+        const b = document.createElement("button");
+        b.className = "numBtn";
+        b.textContent = n;
+        b.dataset.num = String(n);
+        const row = Math.floor(idx / 7) + 1;
+        const col = (idx % 7) + 1;
+        b.style.gridRow = row;
+        b.style.gridColumn = col;
+        b.addEventListener("click", (e)=> onNumberClick(e, n));
+        grid.appendChild(b);
+      });
+
+      const xBtn = document.createElement("button");
+      xBtn.className = "numBtn xBtn";
+      xBtn.textContent = "X";
+      xBtn.dataset.num = "X";
+      xBtn.addEventListener("click", (e)=> onMissClick(e));
+      grid.appendChild(xBtn);
+    }
+    buildGrid();
+
+    let dtTarget = null;
+    function hideDT(){
+      dtPop.classList.remove("show");
+      if (dtTarget?.btnEl) dtTarget.btnEl.classList.remove("selected");
+      dtTarget = null;
+    }
+    function showDT(btnEl, num){
+      if (num === 25) btnT.classList.add("hidden");
+      else btnT.classList.remove("hidden");
+
+      const rect = btnEl.getBoundingClientRect();
+      const padRect = padEl.getBoundingClientRect();
+      const centerX = rect.left + rect.width/2;
+      const topY = rect.top;
+
+      dtPop.style.left = (centerX - padRect.left) + "px";
+      dtPop.style.top  = (topY - padRect.top) + "px";
+
+      dtPop.classList.add("show");
+      btnEl.classList.add("selected");
+    }
+
+    btnD.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      if (!dtTarget) return;
+      applyThrow(dtTarget.num, 2);
+      hideDT();
+    });
+    btnT.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      if (!dtTarget) return;
+      if (btnT.classList.contains("hidden")) return;
+      applyThrow(dtTarget.num, 3);
+      hideDT();
+    });
+
+    document.addEventListener("click", (e)=>{
+      const isNum = e.target.classList?.contains("numBtn");
+      const isPop = dtPop.contains(e.target);
+      if (!isNum && !isPop) hideDT();
+    });
+
+    function turnIsLocked(){
+      return state.started && state.currentThrows.length >= 3;
+    }
+
+    function onNumberClick(e, num){
+      const btnEl = e.currentTarget;
+      if (btnEl.classList.contains("disabled")) return;
+
+      if (!state.started){
+        flashHint("Start eerst het spel met ▶");
+        return;
+      }
+      if (state.players.length === 0){
+        flashHint("Voeg eerst een speler toe via +");
+        return;
+      }
+      if (turnIsLocked()){
+        flashHint("3 worpen gegooid. Bevestig eerst met ✓.");
+        return;
+      }
+
+      if (dtTarget && dtTarget.num === num){
+        applyThrow(num, 1);
+        hideDT();
+        return;
+      }
+
+      hideDT();
+      dtTarget = { num, btnEl };
+      showDT(btnEl, num);
+    }
+
+    function onMissClick(e){
+      const btnEl = e.currentTarget;
+      if (btnEl.classList.contains("disabled")) return;
+
+      if (!state.started){
+        flashHint("Start eerst het spel met ▶");
+        return;
+      }
+      if (state.players.length === 0){
+        flashHint("Voeg eerst een speler toe via +");
+        return;
+      }
+      if (turnIsLocked()){
+        flashHint("3 worpen gegooid. Bevestig eerst met ✓.");
+        return;
+      }
+
+      hideDT();
+      applyThrow(0, 1);
+    }
+
+    function flashHint(msg){
+      const old = hint.textContent;
+      hint.textContent = msg;
+      setTimeout(()=>{ hint.textContent = old; }, 1600);
+    }
+
+    function snapshot(){
+      const players = state.players.map(p=>({
+        name:p.name,
+        scoreX01:p.scoreX01,
+        openedIn:p.openedIn,
+        cricketScore:p.cricketScore,
+        cricketMarks: {...p.cricketMarks}
+      }));
+      return {
+        game: state.game,
+        doubleIn: state.doubleIn,
+        doubleOut: state.doubleOut,
+        players,
+        currentPlayer: state.currentPlayer,
+        turnIndex: state.turnIndex,
+        currentThrows: state.currentThrows.map(x=>({...x})),
+        started: state.started,
+        turnStartSnapshot: state.turnStartSnapshot ? {
+          scoreX01: state.turnStartSnapshot.scoreX01,
+          openedIn: state.turnStartSnapshot.openedIn,
+          cricketScore: state.turnStartSnapshot.cricketScore,
+          cricketMarks: {...state.turnStartSnapshot.cricketMarks}
+        } : null,
+        scram: cloneScramState()
+      };
+    }
+
+    function restore(snap){
+      state.game = snap.game;
+      state.doubleIn = snap.doubleIn;
+      state.doubleOut = snap.doubleOut;
+      state.players = snap.players.map(p=>({
+        name:p.name,
+        scoreX01:p.scoreX01,
+        openedIn:p.openedIn,
+        cricketScore:p.cricketScore,
+        cricketMarks: {...p.cricketMarks}
+      }));
+      state.currentPlayer = snap.currentPlayer;
+      state.turnIndex = snap.turnIndex;
+      state.currentThrows = snap.currentThrows.map(x=>({...x}));
+      state.started = !!snap.started;
+      state.turnStartSnapshot = snap.turnStartSnapshot ? {
+        scoreX01: snap.turnStartSnapshot.scoreX01,
+        openedIn: snap.turnStartSnapshot.openedIn,
+        cricketScore: snap.turnStartSnapshot.cricketScore,
+        cricketMarks: {...snap.turnStartSnapshot.cricketMarks}
+      } : null;
+      state.scram = snap.scram ? {...snap.scram} : {
+        phase: 1,
+        targetScore: 0,
+        phase1ScorerIndex: 0,
+        phase1CloserIndex: 1
+      };
+      hideDT();
+      renderAll();
+    }
+
+    function pushHistory(){
+      state.history.push(snapshot());
+      if (state.history.length > 200) state.history.shift();
+    }
+
+    function isScram(){
+      return state.game === "SCRAM";
+    }
+
+    function isCricketLike(){
+      return state.game === "CRICKET" || state.game === "SCRAM";
+    }
+
+    function playerHasAllCricketClosed(player){
+      return CRICKET_NUMS.every(n => (player.cricketMarks[n] || 0) >= 3);
+    }
+
+    function getCricketWinnerIndex(){
+      if (state.players.length === 0) return -1;
+      const maxScore = Math.max(...state.players.map(p => p.cricketScore));
+      const candidates = state.players
+        .map((p, i) => ({p, i}))
+        .filter(x => x.p.cricketScore === maxScore && playerHasAllCricketClosed(x.p));
+      if (candidates.length === 1) return candidates[0].i;
+      return -1;
+    }
+
+    function getScramScorerIndex(){
+      if (state.scram.phase === 1) return state.scram.phase1ScorerIndex;
+      return state.scram.phase1CloserIndex;
+    }
+
+    function getScramCloserIndex(){
+      if (state.scram.phase === 1) return state.scram.phase1CloserIndex;
+      return state.scram.phase1ScorerIndex;
+    }
+
+    function isScramScorer(idx){
+      return isScram() && idx === getScramScorerIndex();
+    }
+
+    function isScramCloser(idx){
+      return isScram() && idx === getScramCloserIndex();
+    }
+
+    function getScramCloserPlayer(){
+      return state.players[getScramCloserIndex()];
+    }
+
+    function getScramScorerPlayer(){
+      return state.players[getScramScorerIndex()];
+    }
+
+    function scramAllClosed(){
+      const closer = getScramCloserPlayer();
+      if (!closer) return false;
+      return playerHasAllCricketClosed(closer);
+    }
+
+    function resetScramMarksOnly(){
+      state.players.forEach(p=>{
+        p.cricketMarks = Object.fromEntries(CRICKET_NUMS.map(n => [n, 0]));
+      });
+    }
+
+    function startScramPhase2(){
+      state.scram.targetScore = state.players[state.scram.phase1ScorerIndex]?.cricketScore || 0;
+      state.scram.phase = 2;
+      resetScramMarksOnly();
+      state.currentThrows = [];
+      state.currentPlayer = getScramScorerIndex();
+      saveTurnStartSnapshot();
+      renderAll();
+      showInfoPopup("FASE 2", `${state.players[getScramScorerIndex()].name} moet meer dan ${state.scram.targetScore} halen`);
+    }
+
+    function finishGameWithWinner(playerName){
+      state.started = false;
+      state.currentThrows = [];
+      hideDT();
+      renderAll();
+      showWinPopup(playerName);
+    }
+
+    function applyThrow(num, mult){
+      if (!state.started) return;
+      if (state.players.length === 0) return;
+      if (state.currentThrows.length >= 3) return;
+
+      pushHistory();
+
+      if (state.currentPlayer >= state.players.length) state.currentPlayer = 0;
+      const player = state.players[state.currentPlayer];
+
+      if (state.game === "CRICKET"){
+        if (num !== 0 && !CRICKET_NUMS.includes(num)) return;
+        if (num === 25 && mult === 3) mult = 2;
+
+        const label = (num===0) ? "0" : (mult===1 ? String(num) : (mult===2 ? ("D"+num) : ("T"+num)));
+        const hits = (num===0) ? 0 : mult;
+
+        let deltaScore = 0;
+
+        if (num !== 0){
+          const before = player.cricketMarks[num] || 0;
+          const afterRaw = before + hits;
+
+          const oppNotClosed = state.players.some((p,idx)=> idx!==state.currentPlayer && (p.cricketMarks[num]||0) < 3);
+
+          if (oppNotClosed){
+            const beforeExtra = Math.max(0, before - 3);
+            const afterExtra  = Math.max(0, afterRaw - 3);
+            const extraHitsScoring = Math.max(0, afterExtra - beforeExtra);
+            deltaScore = extraHitsScoring * num;
+          }
+
+          player.cricketMarks[num] = afterRaw;
+          player.cricketScore += deltaScore;
+        }
+
+        state.currentThrows.push({ label, pointsDelta: deltaScore });
+        hideDT();
+        renderAll();
+
+        const winnerIndex = getCricketWinnerIndex();
+        if (winnerIndex !== -1){
+          finishGameWithWinner(state.players[winnerIndex].name);
+        }
+
+        return;
+      }
+
+      if (state.game === "SCRAM"){
+        if (num !== 0 && !CRICKET_NUMS.includes(num)) return;
+        if (num === 25 && mult === 3) mult = 2;
+
+        const label = (num===0) ? "0" : (mult===1 ? String(num) : (mult===2 ? ("D"+num) : ("T"+num)));
+        const hits = (num===0) ? 0 : mult;
+
+        const scorerIndex = getScramScorerIndex();
+        const closerIndex = getScramCloserIndex();
+        const scorer = state.players[scorerIndex];
+        const closer = state.players[closerIndex];
+
+        let deltaScore = 0;
+
+        if (num !== 0){
+          if (state.currentPlayer === scorerIndex){
+            const closerMarks = closer.cricketMarks[num] || 0;
+            const openHits = Math.max(0, 3 - closerMarks);
+            deltaScore = Math.min(hits, openHits) * num;
+            scorer.cricketScore += deltaScore;
+          } else if (state.currentPlayer === closerIndex){
+            const before = closer.cricketMarks[num] || 0;
+            closer.cricketMarks[num] = Math.min(3, before + hits);
+          }
+        }
+
+        state.currentThrows.push({ label, pointsDelta: deltaScore });
+        hideDT();
+        renderAll();
+
+        if (state.scram.phase === 1){
+          if (scramAllClosed()){
+            setTimeout(()=>{
+              if (!state.started) return;
+              startScramPhase2();
+            }, 500);
+          }
+          return;
+        }
+
+        if (scorer.cricketScore > state.scram.targetScore){
+          finishGameWithWinner(scorer.name);
+          return;
+        }
+
+        if (scramAllClosed()){
+          const phase1Winner = state.players[state.scram.phase1ScorerIndex];
+          finishGameWithWinner(phase1Winner.name);
+        }
+
+        return;
+      }
+
+      const label = (num===0) ? "0" : (mult===1 ? String(num) : (mult===2 ? ("D"+num) : ("T"+num)));
+      const points = (num===0) ? 0 : (num * mult);
+
+      let canScore = true;
+      if (state.doubleIn && !player.openedIn){
+        if (mult === 2 && num !== 0){
+          player.openedIn = true;
+        } else {
+          canScore = false;
+        }
+      }
+
+      const appliedPoints = canScore ? points : 0;
+      const beforeScore = player.scoreX01;
+      const newScore = beforeScore - appliedPoints;
+
+      let bust = false;
+      if (canScore){
+        if (newScore < 0) bust = true;
+        if (state.doubleOut && newScore === 1) bust = true;
+        if (newScore === 0 && state.doubleOut){
+          if (!(mult === 2 && num !== 0)) bust = true;
+        }
+      }
+
+      if (bust){
+        restoreCurrentPlayerToTurnStart();
+        hideDT();
+        renderAll();
+        showBustPopup(player.name);
+
+        setTimeout(()=>{
+          if (!state.started) return;
+          endTurn();
+        }, 1300);
+        return;
+      }
+
+      player.scoreX01 = newScore;
+      state.currentThrows.push({ label, pointsDelta: appliedPoints });
+      hideDT();
+      renderAll();
+
+      if (newScore === 0){
+        finishGameWithWinner(player.name);
+        return;
+      }
+    }
+
+    function endTurn(){
+      state.currentThrows = [];
+      hideDT();
+
+      if (state.players.length === 0){
+        renderAll();
+        return;
+      }
+
+      state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
+      if (state.currentPlayer === 0) state.turnIndex += 1;
+
+      saveTurnStartSnapshot();
+      renderAll();
+    }
+
+    function isClosedByPlayer(p, n){
+      return (p.cricketMarks?.[n] || 0) >= 3;
+    }
+
+    function isAllClosed(n){
+      if (state.players.length === 0) return false;
+
+      if (state.game === "SCRAM"){
+        const closer = getScramCloserPlayer();
+        return !!closer && isClosedByPlayer(closer, n);
+      }
+
+      return state.players.every(p => isClosedByPlayer(p, n));
+    }
+
+    function svgPencil(){
+      return `
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 20h9"/>
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z"/>
+        </svg>`;
+    }
+    function svgX(){
+      return `
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 6 6 18"/>
+          <path d="M6 6l12 12"/>
+        </svg>`;
+    }
+
+    function renderAll(){
+      if (state.game === "CRICKET"){
+        gameLabel.textContent = "Game: CRICKET";
+        togglesX01.style.display = "none";
+      } else if (state.game === "SCRAM"){
+        gameLabel.textContent = "Game: SCRAM CRICKET";
+        togglesX01.style.display = "none";
+      } else {
+        gameLabel.textContent = "Game: " + state.game;
+        togglesX01.style.display = "flex";
+      }
+
+      if (state.game === "SCRAM"){
+        phaseBadge.style.display = "inline-flex";
+        phaseBadge.textContent = `fase ${state.scram.phase}` + (state.scram.phase === 2 ? ` · target ${state.scram.targetScore}` : "");
+      } else {
+        phaseBadge.style.display = "none";
+      }
+
+      doubleInEl.checked = !!state.doubleIn;
+      doubleOutEl.checked = !!state.doubleOut;
+
+      if (!state.started){
+        btnPlayStop.textContent = "▶";
+        btnPlayStop.title = "Start spel";
+        btnPlayStop.classList.remove("danger");
+      } else {
+        btnPlayStop.textContent = "⏹";
+        btnPlayStop.title = "Stop/Reset";
+        btnPlayStop.classList.add("danger");
+      }
+
+      if (turnIsLocked()){
+        btnOk.classList.add("ready");
+        btnOk.title = "Bevestig volgende speler";
+      } else {
+        btnOk.classList.remove("ready");
+        btnOk.title = "Beurt afsluiten";
+      }
+
+      renderPlayers();
+      renderTurnLine();
+      renderKeypadEnabled();
+      renderHint();
+    }
+
+    function renderPlayers(){
+      playersScroll.innerHTML = "";
+
+      if (state.players.length === 0){
+        const empty = document.createElement("div");
+        empty.className = "emptyState";
+        empty.innerHTML = "Nog geen spelers.<br>Voeg spelers toe met <strong>＋</strong>.";
+        playersScroll.appendChild(empty);
+        return;
+      }
+
+      const allowEdit = !state.started;
+
+      if (isCricketLike()){
+        state.players.forEach((p, idx)=>{
+          const row = document.createElement("div");
+          row.className = "cricketRow" + (idx===state.currentPlayer ? " active" : "");
+          row.addEventListener("click", ()=>{
+            if (!state.started) {
+              state.currentPlayer = idx;
+              renderAll();
+            }
+          });
+
+          const left = document.createElement("div");
+          left.className = "crLeft";
+
+          const name = document.createElement("div");
+          name.className = "crName";
+          name.textContent = p.name;
+          left.appendChild(name);
+
+          if (state.game === "SCRAM" && state.players.length === 2){
+            const role = document.createElement("div");
+            if (isScramScorer(idx)){
+              role.className = "roleTag scorer";
+              role.textContent = "SCORER";
+            } else if (isScramCloser(idx)){
+              role.className = "roleTag closer";
+              role.textContent = "CLOSER";
+            } else {
+              role.className = "roleTag";
+              role.textContent = "";
+            }
+            left.appendChild(role);
+          }
+
+          if (allowEdit){
+            const rb = document.createElement("div");
+            rb.className = "rowBtns";
+
+            const edit = document.createElement("button");
+            edit.className = "iconBtn";
+            edit.title = "Bewerk speler";
+            edit.innerHTML = svgPencil();
+            edit.addEventListener("click", (ev)=>{ ev.stopPropagation(); openPlayerModal("edit", idx); });
+
+            const del = document.createElement("button");
+            del.className = "iconBtn danger";
+            del.title = "Verwijder speler";
+            del.innerHTML = svgX();
+            del.addEventListener("click", async (ev)=>{
+              ev.stopPropagation();
+              const ok = await openConfirm({
+                title: "Speler verwijderen",
+                text: `Verwijder speler "${p.name}"?`,
+                okText: "Verwijder",
+                okKind: "danger"
+              });
+              if (!ok) return;
+              deletePlayer(idx);
+            });
+
+            rb.appendChild(edit);
+            rb.appendChild(del);
+            left.appendChild(rb);
+          }
+
+          const marks = document.createElement("div");
+          marks.className = "crMarks";
+
+          const allClosedMap = Object.fromEntries(CRICKET_NUMS.map(n => [n, isAllClosed(n)]));
+
+          CRICKET_NUMS.forEach(n=>{
+            const cell = document.createElement("div");
+            cell.className = "crNum";
+
+            let closed = false;
+            if (state.game === "SCRAM"){
+              if (isScramCloser(idx)){
+                closed = isClosedByPlayer(p, n);
+              } else {
+                closed = false;
+              }
+            } else {
+              closed = isClosedByPlayer(p, n);
+            }
+
+            const allClosed = allClosedMap[n];
+            if (allClosed) cell.classList.add("allClosed");
+            else if (closed) cell.classList.add("closed");
+
+            const nn = document.createElement("div");
+            nn.className = "n";
+            nn.textContent = String(n);
+
+            const dots = document.createElement("div");
+            dots.className = "dots";
+
+            let filled = 0;
+            if (state.game === "SCRAM"){
+              filled = isScramCloser(idx) ? Math.min(3, p.cricketMarks[n] || 0) : 0;
+            } else {
+              filled = Math.min(3, p.cricketMarks[n] || 0);
+            }
+
+            for (let i=0;i<3;i++){
+              const d = document.createElement("div");
+              d.className = "dot" + (i<filled ? " filled" : "");
+              dots.appendChild(d);
+            }
+
+            cell.appendChild(nn);
+            cell.appendChild(dots);
+            marks.appendChild(cell);
+          });
+
+          const score = document.createElement("div");
+          score.className = "crScore";
+          score.innerHTML = `${p.cricketScore}`;
+
+          if (state.game === "SCRAM" && state.scram.phase === 2 && isScramScorer(idx)){
+            const tg = document.createElement("span");
+            tg.className = "crTarget";
+            tg.textContent = `target ${state.scram.targetScore}`;
+            score.appendChild(tg);
+          }
+
+          row.appendChild(left);
+          row.appendChild(marks);
+          row.appendChild(score);
+          playersScroll.appendChild(row);
+        });
+        return;
+      }
+
+      state.players.forEach((p, idx)=>{
+        const row = document.createElement("div");
+        row.className = "playerRow" + (idx===state.currentPlayer ? " active" : "");
+        row.addEventListener("click", ()=>{
+          if (!state.started) {
+            state.currentPlayer = idx;
+            renderAll();
+          }
+        });
+
+        const left = document.createElement("div");
+        left.style.flex = "1";
+        left.style.display = "flex";
+        left.style.flexDirection = "column";
+        left.style.gap = "6px";
+
+        const name = document.createElement("div");
+        name.style.fontSize = "22px";
+        name.style.fontWeight = "950";
+        name.style.lineHeight = "1.05";
+        name.textContent = p.name;
+        left.appendChild(name);
+
+        if (allowEdit){
+          const rb = document.createElement("div");
+          rb.className = "rowBtns";
+          rb.style.marginTop = "0";
+
+          const edit = document.createElement("button");
+          edit.className = "iconBtn";
+          edit.title = "Bewerk speler";
+          edit.innerHTML = svgPencil();
+          edit.addEventListener("click", (ev)=>{ ev.stopPropagation(); openPlayerModal("edit", idx); });
+
+          const del = document.createElement("button");
+          del.className = "iconBtn danger";
+          del.title = "Verwijder speler";
+          del.innerHTML = svgX();
+          del.addEventListener("click", async (ev)=>{
+            ev.stopPropagation();
+            const ok = await openConfirm({
+              title: "Speler verwijderen",
+              text: `Verwijder speler "${p.name}"?`,
+              okText: "Verwijder",
+              okKind: "danger"
+            });
+            if (!ok) return;
+            deletePlayer(idx);
+          });
+
+          rb.appendChild(edit);
+          rb.appendChild(del);
+          left.appendChild(rb);
+        }
+
+        const score = document.createElement("div");
+        score.style.minWidth = "44px";
+        score.style.textAlign = "right";
+        score.style.fontSize = "26px";
+        score.style.fontWeight = "950";
+        score.style.color = "var(--accent)";
+        score.textContent = String(p.scoreX01);
+
+        row.appendChild(left);
+        row.appendChild(score);
+        playersScroll.appendChild(row);
+      });
+    }
+
+    function renderTurnLine(){
+      turnNo.textContent = "#" + state.turnIndex;
+      const labels = state.currentThrows.map(t=>t.label);
+      t1.textContent = labels[0] ?? "-";
+      t2.textContent = labels[1] ?? "-";
+      t3.textContent = labels[2] ?? "-";
+      const sum = state.currentThrows.reduce((acc,t)=> acc + (t.pointsDelta || 0), 0);
+      turnSum.textContent = String(sum);
+    }
+
+    function renderKeypadEnabled(){
+      const isCricketMode = isCricketLike();
+      const buttons = [...grid.querySelectorAll(".numBtn")];
+      const locked = turnIsLocked();
+
+      buttons.forEach(b=>{
+        const val = b.dataset.num;
+
+        if (!state.started || locked){
+          b.classList.add("disabled");
+          return;
+        }
+
+        if (val === "X"){
+          b.classList.remove("disabled");
+          return;
+        }
+
+        const n = Number(val);
+
+        if (isCricketMode){
+          if (CRICKET_NUMS.includes(n)) b.classList.remove("disabled");
+          else b.classList.add("disabled");
+        } else {
+          b.classList.remove("disabled");
+        }
+      });
+
+      if (locked) hideDT();
+    }
+
+    function renderHint(){
+      if (state.players.length === 0){
+        hint.textContent = "Voeg spelers toe met +.";
+        return;
+      }
+
+      if (!state.started){
+        if (state.game === "SCRAM"){
+          hint.textContent = "SCRAM CRICKET is voorzien voor 2 spelers. Fase 1: speler 1 scoort, speler 2 sluit. Daarna wisselen de rollen.";
+          return;
+        }
+        hint.textContent = "Spel nog niet gestart: je kan spelers nog bewerken/verwijderen. Start met ▶.";
+        return;
+      }
+
+      if (turnIsLocked()){
+        hint.textContent = "3 worpen geregistreerd. Klik op ✓ om de beurt van de volgende speler te bevestigen.";
+        return;
+      }
+
+      if (state.game === "CRICKET"){
+        hint.textContent = "CRICKET: groen = jij hebt gesloten, rood = iedereen heeft gesloten. Win = alles dicht én hoogste score.";
+        return;
+      }
+
+      if (state.game === "SCRAM"){
+        const scorer = getScramScorerPlayer();
+        const closer = getScramCloserPlayer();
+        if (state.scram.phase === 1){
+          hint.textContent = `SCRAM fase 1: ${scorer?.name || "Scorer"} maakt punten op open nummers. ${closer?.name || "Closer"} probeert alles te sluiten.`;
+        } else {
+          hint.textContent = `SCRAM fase 2: ${scorer?.name || "Scorer"} moet meer dan ${state.scram.targetScore} halen voordat ${closer?.name || "Closer"} alles sluit.`;
+        }
+        return;
+      }
+
+      hint.textContent = "X01: klik getal → D/T. Klik opnieuw op hetzelfde getal = single. X = miss (0). Bij bust vervalt de volledige beurt.";
+    }
+
+    function deletePlayer(idx){
+      if (state.started) return;
+      pushHistory();
+      state.players.splice(idx, 1);
+      if (state.currentPlayer >= state.players.length) state.currentPlayer = 0;
+      renderAll();
+    }
+
+    let playerModalMode = "add";
+    let playerEditIndex = -1;
+
+    function openPlayerModal(mode, idx=-1){
+      if (state.started){
+        flashHint("Spel is gestart: spelers wijzigen is niet meer mogelijk.");
+        return;
+      }
+      playerModalMode = mode;
+      playerEditIndex = idx;
+
+      if (mode === "add"){
+        playerModalTitle.textContent = "Speler toevoegen";
+        playerNameInput.value = "";
+      } else {
+        playerModalTitle.textContent = "Speler bewerken";
+        playerNameInput.value = state.players[idx]?.name ?? "";
+      }
+
+      showOverlay(overlayPlayer);
+      setTimeout(()=> playerNameInput.focus(), 30);
+    }
+
+    function closePlayerModal(){
+      hideOverlay(overlayPlayer);
+      playerNameInput.blur();
+    }
+
+    function savePlayerModal(){
+      const name = (playerNameInput.value || "").trim();
+      if (!name) { flashHint("Geef een naam in."); return; }
+
+      pushHistory();
+
+      if (playerModalMode === "add"){
+        const p = makePlayer(name);
+        state.players.push(p);
+
+        if (state.players.length === 1){
+          state.currentPlayer = 0;
+          state.turnIndex = 1;
+          state.currentThrows = [];
+        }
+      } else {
+        if (playerEditIndex >= 0 && playerEditIndex < state.players.length){
+          state.players[playerEditIndex].name = name;
+        }
+      }
+
+      closePlayerModal();
+      renderAll();
+      setTimeout(()=>{ playersScroll.scrollTop = playersScroll.scrollHeight; }, 0);
+    }
+
+    function openGameModal(){
+      if (state.started){
+        flashHint("Stop/Reset eerst om van game te wisselen.");
+        return;
+      }
+      showOverlay(overlayGame);
+    }
+
+    gameBtn.addEventListener("click", openGameModal);
+
+    document.querySelectorAll(".opt").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        const g = el.dataset.game;
+        hideOverlay(overlayGame);
+        if (g === "CRICKET") resetForGame("CRICKET");
+        else if (g === "SCRAM") resetForGame("SCRAM");
+        else resetForGame(Number(g));
+      });
+    });
+
+    doubleInEl.addEventListener("change", ()=>{ state.doubleIn = !!doubleInEl.checked; renderAll(); });
+    doubleOutEl.addEventListener("change", ()=>{ state.doubleOut = !!doubleOutEl.checked; renderAll(); });
+
+    btnAddPlayer.addEventListener("click", ()=> openPlayerModal("add"));
+    playerCancel.addEventListener("click", closePlayerModal);
+    playerSave.addEventListener("click", savePlayerModal);
+    playerNameInput.addEventListener("keydown", (e)=>{
+      if (e.key === "Enter") savePlayerModal();
+      if (e.key === "Escape") closePlayerModal();
+    });
+
+    btnPlayStop.addEventListener("click", async ()=>{
+      if (!state.started){
+        if (state.players.length === 0){
+          flashHint("Voeg eerst minstens 1 speler toe.");
+          return;
+        }
+
+        if (state.game === "SCRAM" && state.players.length !== 2){
+          flashHint("SCRAM CRICKET werkt in deze versie enkel met exact 2 spelers.");
+          return;
+        }
+
+        state.started = true;
+        state.history = [];
+        state.currentThrows = [];
+        state.turnIndex = 1;
+        state.currentPlayer = 0;
+        resetScramState();
+        saveTurnStartSnapshot();
+        renderAll();
+
+        if (state.game === "SCRAM"){
+          showInfoPopup("SCRAM START", `${state.players[0].name} scoort · ${state.players[1].name} sluit`);
+        }
+        return;
+      }
+
+      const ok = await openConfirm({
+        title: "Stop/Reset",
+        text: "Stop/Reset het spel? Scores worden teruggezet en je kan spelers weer wijzigen.",
+        okText: "Reset",
+        okKind: "danger"
+      });
+      if (!ok) return;
+      resetScoresForCurrentGame();
+    });
+
+    btnOk.addEventListener("click", ()=>{
+      if (!state.started){
+        flashHint("Start eerst het spel met ▶");
+        return;
+      }
+      if (state.players.length === 0) return;
+      hideDT();
+      endTurn();
+    });
+
+    btnUndo.addEventListener("click", ()=>{
+      if (!state.started){
+        flashHint("Start eerst het spel met ▶");
+        return;
+      }
+      hideDT();
+      const snap = state.history.pop();
+      if (!snap) return;
+      restore(snap);
+    });
+
+    function getAudioCtx(){
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      if (!window.__dartAudioCtx) window.__dartAudioCtx = new AudioCtx();
+      return window.__dartAudioCtx;
+    }
+
+    function ensureAudio(){
+      const ctx = getAudioCtx();
+      if (!ctx) return null;
+      if (ctx.state === "suspended") ctx.resume();
+      return ctx;
+    }
+
+    function playTone(freq=440, duration=0.12, type="sine", gain=0.05, delay=0){
+      const ctx = ensureAudio();
+      if (!ctx) return;
+
+      const now = ctx.currentTime + delay;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(gain, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    }
+
+    function playNoiseBurst({duration=0.5, gain=0.04, delay=0, hp=300, lp=2500}={}){
+      const ctx = ensureAudio();
+      if (!ctx) return;
+
+      const sampleRate = ctx.sampleRate;
+      const length = Math.max(1, Math.floor(sampleRate * duration));
+      const buffer = ctx.createBuffer(1, length, sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < length; i++){
+        data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+
+      const hpFilter = ctx.createBiquadFilter();
+      hpFilter.type = "highpass";
+      hpFilter.frequency.value = hp;
+
+      const lpFilter = ctx.createBiquadFilter();
+      lpFilter.type = "lowpass";
+      lpFilter.frequency.value = lp;
+
+      const g = ctx.createGain();
+      const now = ctx.currentTime + delay;
+
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(gain, now + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      source.connect(hpFilter);
+      hpFilter.connect(lpFilter);
+      lpFilter.connect(g);
+      g.connect(ctx.destination);
+
+      source.start(now);
+      source.stop(now + duration + 0.05);
+    }
+
+    function playZoomerSound(){
+      const ctx = ensureAudio();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const g = ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(900, now);
+      osc.frequency.exponentialRampToValueAtTime(120, now + 0.55);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(1800, now);
+      filter.frequency.exponentialRampToValueAtTime(220, now + 0.55);
+      filter.Q.value = 8;
+
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.08, now + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.62);
+
+      osc.connect(filter);
+      filter.connect(g);
+      g.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.66);
+
+      playTone(220, 0.18, "triangle", 0.03, 0.12);
+      playTone(150, 0.24, "triangle", 0.025, 0.22);
+    }
+
+    function playCrowdCheerSound(){
+      playNoiseBurst({duration:1.6, gain:0.028, delay:0.00, hp:250, lp:2600});
+      playNoiseBurst({duration:1.9, gain:0.020, delay:0.12, hp:500, lp:4200});
+      playTone(523.25, 0.16, "triangle", 0.04, 0.05);
+      playTone(659.25, 0.18, "triangle", 0.045, 0.18);
+      playTone(783.99, 0.22, "triangle", 0.05, 0.34);
+      playTone(1046.5, 0.45, "triangle", 0.055, 0.52);
+      playTone(1318.5, 0.35, "triangle", 0.04, 0.66);
+    }
+
+    function playInfoSound(){
+      playTone(392, 0.10, "triangle", 0.045, 0.00);
+      playTone(523.25, 0.12, "triangle", 0.045, 0.08);
+    }
+
+    function clearFx(){
+      clearTimeout(showFx._timer);
+      fxState.closable = false;
+      fxState.onClose = null;
+      fxHint.style.display = "none";
+      fxOverlay.classList.remove("show");
+    }
+
+    fxOverlay.addEventListener("click", ()=>{
+      if (!fxState.closable) return;
+      const fn = fxState.onClose;
+      clearFx();
+      if (typeof fn === "function") fn();
+    });
+
+    function showFx(title, sub, kind="win", autoHideMs=1400, options={}){
+      const { closable = false, hintText = "Tik om te sluiten", onClose = null } = options;
+
+      clearTimeout(showFx._timer);
+
+      fxTitle.textContent = title;
+      fxSub.textContent = sub;
+      fxTitle.className = "fxTitle " + kind;
+
+      fxState.closable = closable;
+      fxState.onClose = onClose;
+
+      if (closable){
+        fxHint.textContent = hintText;
+        fxHint.style.display = "block";
+      } else {
+        fxHint.style.display = "none";
+      }
+
+      fxOverlay.classList.add("show");
+
+      if (autoHideMs > 0){
+        showFx._timer = setTimeout(()=>{
+          clearFx();
+        }, autoHideMs);
+      }
+    }
+
+    function showBustPopup(playerName){
+      playZoomerSound();
+      showFx("BUST!", playerName, "bust", 1200);
+    }
+
+    function showWinPopup(playerName){
+      playCrowdCheerSound();
+      showFx("WINNER!", playerName, "win", 0, {
+        closable: true,
+        hintText: "Tik op deze popup om verder te gaan"
+      });
+    }
+
+    function showInfoPopup(title, text){
+      playInfoSound();
+      showFx(title, text, "info", 1600);
+    }
+
+    resetForGame(501);
+    state.doubleIn = false;
+    state.doubleOut = true;
+    renderAll();
+  </script>
+</body>
+</html>
