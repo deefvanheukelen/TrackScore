@@ -673,6 +673,37 @@
       color: var(--text);
       line-height: 1.2;
     }
+
+    @media (max-width: 520px){
+      .cricketRow{
+        flex-wrap:wrap;
+        align-items:flex-start;
+      }
+
+      .crLeft{
+        flex:1 1 calc(100% - 70px);
+        min-width:0;
+      }
+
+      .crScore{
+        flex:0 0 auto;
+        margin-left:auto;
+        padding-top:0;
+      }
+
+      .crMarks{
+        order:3;
+        width:100%;
+        flex:0 0 100%;
+        justify-content:space-between;
+        padding-top:8px;
+      }
+
+      .crNum{
+        width:auto;
+        flex:1 1 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -891,6 +922,7 @@
       state.started = false;
       state.turnStartSnapshot = null;
       resetScramState();
+      hideDT();
 
       if (state.game === "CRICKET" || state.game === "SCRAM"){
         state.players.forEach(p=>{
@@ -1058,6 +1090,10 @@
       if (!isNum && !isPop) hideDT();
     });
 
+    function turnIsLocked(){
+      return state.started && state.currentThrows.length >= 3;
+    }
+
     function onNumberClick(e, num){
       const btnEl = e.currentTarget;
       if (btnEl.classList.contains("disabled")) return;
@@ -1068,6 +1104,10 @@
       }
       if (state.players.length === 0){
         flashHint("Voeg eerst een speler toe via +");
+        return;
+      }
+      if (turnIsLocked()){
+        flashHint("3 worpen gegooid. Bevestig eerst met ✓.");
         return;
       }
 
@@ -1092,6 +1132,10 @@
       }
       if (state.players.length === 0){
         flashHint("Voeg eerst een speler toe via +");
+        return;
+      }
+      if (turnIsLocked()){
+        flashHint("3 worpen gegooid. Bevestig eerst met ✓.");
         return;
       }
 
@@ -1159,6 +1203,7 @@
         phase1ScorerIndex: 0,
         phase1CloserIndex: 1
       };
+      hideDT();
       renderAll();
     }
 
@@ -1283,10 +1328,10 @@
         }
 
         state.currentThrows.push({ label, pointsDelta: deltaScore });
-
-        const winnerIndex = getCricketWinnerIndex();
+        hideDT();
         renderAll();
 
+        const winnerIndex = getCricketWinnerIndex();
         if (winnerIndex !== -1){
           finishGameWithWinner(state.players[winnerIndex].name);
         }
@@ -1321,6 +1366,7 @@
         }
 
         state.currentThrows.push({ label, pointsDelta: deltaScore });
+        hideDT();
         renderAll();
 
         if (state.scram.phase === 1){
@@ -1373,6 +1419,7 @@
 
       if (bust){
         restoreCurrentPlayerToTurnStart();
+        hideDT();
         renderAll();
         showBustPopup(player.name);
 
@@ -1385,6 +1432,7 @@
 
       player.scoreX01 = newScore;
       state.currentThrows.push({ label, pointsDelta: appliedPoints });
+      hideDT();
       renderAll();
 
       if (newScore === 0){
@@ -1395,6 +1443,7 @@
 
     function endTurn(){
       state.currentThrows = [];
+      hideDT();
 
       if (state.players.length === 0){
         renderAll();
@@ -1704,21 +1753,22 @@
     function renderKeypadEnabled(){
       const isCricketMode = isCricketLike();
       const buttons = [...grid.querySelectorAll(".numBtn")];
+      const locked = turnIsLocked();
 
       buttons.forEach(b=>{
         const val = b.dataset.num;
+
+        if (!state.started || locked){
+          b.classList.add("disabled");
+          return;
+        }
+
         if (val === "X"){
-          if (!state.started) b.classList.add("disabled");
-          else b.classList.remove("disabled");
+          b.classList.remove("disabled");
           return;
         }
 
         const n = Number(val);
-
-        if (!state.started){
-          b.classList.add("disabled");
-          return;
-        }
 
         if (isCricketMode){
           if (CRICKET_NUMS.includes(n)) b.classList.remove("disabled");
@@ -1727,6 +1777,8 @@
           b.classList.remove("disabled");
         }
       });
+
+      if (locked) hideDT();
     }
 
     function renderHint(){
@@ -1741,6 +1793,11 @@
           return;
         }
         hint.textContent = "Spel nog niet gestart: je kan spelers nog bewerken/verwijderen. Start met ▶.";
+        return;
+      }
+
+      if (turnIsLocked()){
+        hint.textContent = "3 worpen geregistreerd. Klik op ✓ om de beurt van de volgende speler te bevestigen.";
         return;
       }
 
