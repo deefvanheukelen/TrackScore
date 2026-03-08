@@ -73,6 +73,7 @@
       font-size:14px;
       color:var(--muted);
       user-select:none;
+      flex-wrap:wrap;
     }
 
     .gameBtn{
@@ -88,6 +89,18 @@
       gap:6px;
     }
     .caret{opacity:.8; font-size:12px; transform: translateY(1px);}
+
+    .phaseBadge{
+      display:none;
+      padding:4px 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      color: var(--text);
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.3px;
+    }
 
     .toggles{
       display:flex;
@@ -135,7 +148,6 @@
       padding: 10px 10px 8px;
       min-height:0;
       flex:1;
-
       scrollbar-width: thin;
       scrollbar-color: rgba(233,240,246,.22) transparent;
     }
@@ -147,7 +159,10 @@
       border: 2px solid transparent;
       background-clip: content-box;
     }
-    .playersScroll::-webkit-scrollbar-thumb:hover{ background: rgba(233,240,246,.26); background-clip: content-box; }
+    .playersScroll::-webkit-scrollbar-thumb:hover{
+      background: rgba(233,240,246,.26);
+      background-clip: content-box;
+    }
 
     .emptyState{
       padding: 18px 14px;
@@ -222,13 +237,38 @@
       display:flex;
       flex-direction:column;
       gap:6px;
-      min-width:110px;
+      min-width:120px;
       flex:0 0 auto;
     }
     .crName{
       font-size:22px;
       font-weight:950;
       line-height:1.05;
+    }
+
+    .roleTag{
+      display:inline-flex;
+      align-items:center;
+      width:max-content;
+      max-width:100%;
+      padding:4px 9px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:950;
+      letter-spacing:.3px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      color:rgba(233,240,246,.9);
+    }
+    .roleTag.scorer{
+      color:#7fe8a0;
+      border-color: rgba(42,214,109,.22);
+      background: rgba(42,214,109,.10);
+    }
+    .roleTag.closer{
+      color:#ffb3b3;
+      border-color: rgba(255,90,90,.22);
+      background: rgba(255,90,90,.10);
     }
 
     .crMarks{
@@ -253,7 +293,6 @@
       opacity:.85;
     }
     .crNum .n{ font-variant-numeric: tabular-nums; }
-
     .crNum.closed .n{ color: rgba(42,214,109,.95); }
     .crNum.allClosed .n{ color: rgba(255,90,90,.95); }
 
@@ -282,13 +321,20 @@
     }
 
     .crScore{
-      min-width:34px;
+      min-width:58px;
       text-align:right;
       font-size:26px;
       font-weight:950;
       color: var(--accent);
       letter-spacing:.4px;
       padding-top:2px;
+    }
+    .crTarget{
+      display:block;
+      font-size:11px;
+      color: var(--muted);
+      font-weight:800;
+      margin-top:2px;
     }
 
     .turnLineWrap{
@@ -532,6 +578,7 @@
       color:rgba(233,240,246,.42);
       padding: 0 14px 8px;
       user-select:none;
+      line-height:1.35;
     }
 
     .form{
@@ -619,6 +666,7 @@
     }
     .fxTitle.bust{ color: var(--danger); }
     .fxTitle.win{ color: var(--accent); }
+    .fxTitle.info{ color: #7dc7ff; }
     .fxSub{
       font-size: 22px;
       font-weight: 900;
@@ -636,6 +684,7 @@
           <button class="gameBtn" id="gameBtn" aria-label="Kies game">
             <span class="caret">▾</span>
           </button>
+          <span class="phaseBadge" id="phaseBadge"></span>
         </div>
 
         <div class="toggles" id="togglesX01">
@@ -696,7 +745,6 @@
     </div>
   </div>
 
-  <!-- Game chooser -->
   <div class="overlay" id="overlayGame">
     <div class="modal">
       <div class="mHead">
@@ -708,10 +756,10 @@
       <div class="opt" data-game="301">301 <small>X01</small></div>
       <div class="opt" data-game="501">501 <small>X01</small></div>
       <div class="opt" data-game="CRICKET">CRICKET <small>15–20 & bull</small></div>
+      <div class="opt" data-game="SCRAM">SCRAM CRICKET <small>2 spelers</small></div>
     </div>
   </div>
 
-  <!-- Player add/edit -->
   <div class="overlay" id="overlayPlayer">
     <div class="modal">
       <div class="mHead">
@@ -733,7 +781,6 @@
     </div>
   </div>
 
-  <!-- Confirm dialog -->
   <div class="overlay" id="overlayConfirm">
     <div class="modal">
       <div class="mHead">
@@ -752,7 +799,6 @@
     </div>
   </div>
 
-  <!-- FX popup -->
   <div class="fxOverlay" id="fxOverlay">
     <div class="fxCard">
       <div class="fxTitle" id="fxTitle"></div>
@@ -774,13 +820,19 @@
       currentThrows: [],
       history: [],
       started: false,
-      turnStartSnapshot: null
+      turnStartSnapshot: null,
+      scram: {
+        phase: 1,
+        targetScore: 0,
+        phase1ScorerIndex: 0,
+        phase1CloserIndex: 1
+      }
     };
 
     function makePlayer(name){
       return {
         name,
-        scoreX01: (state.game === "CRICKET") ? 0 : Number(state.game),
+        scoreX01: (state.game === "CRICKET" || state.game === "SCRAM") ? 0 : Number(state.game),
         openedIn: false,
         cricketScore: 0,
         cricketMarks: Object.fromEntries(CRICKET_NUMS.map(n => [n, 0]))
@@ -793,6 +845,15 @@
         openedIn: p.openedIn,
         cricketScore: p.cricketScore,
         cricketMarks: {...p.cricketMarks}
+      };
+    }
+
+    function cloneScramState(){
+      return {
+        phase: state.scram.phase,
+        targetScore: state.scram.targetScore,
+        phase1ScorerIndex: state.scram.phase1ScorerIndex,
+        phase1CloserIndex: state.scram.phase1CloserIndex
       };
     }
 
@@ -813,6 +874,15 @@
       p.cricketMarks = {...state.turnStartSnapshot.cricketMarks};
     }
 
+    function resetScramState(){
+      state.scram = {
+        phase: 1,
+        targetScore: 0,
+        phase1ScorerIndex: 0,
+        phase1CloserIndex: 1
+      };
+    }
+
     function resetScoresForCurrentGame(){
       state.turnIndex = 1;
       state.currentPlayer = 0;
@@ -820,17 +890,22 @@
       state.history = [];
       state.started = false;
       state.turnStartSnapshot = null;
+      resetScramState();
 
-      if (state.game === "CRICKET"){
+      if (state.game === "CRICKET" || state.game === "SCRAM"){
         state.players.forEach(p=>{
           p.cricketScore = 0;
           p.cricketMarks = Object.fromEntries(CRICKET_NUMS.map(n => [n, 0]));
+          p.scoreX01 = 0;
+          p.openedIn = false;
         });
       } else {
         const start = Number(state.game);
         state.players.forEach(p=>{
           p.scoreX01 = start;
           p.openedIn = false;
+          p.cricketScore = 0;
+          p.cricketMarks = Object.fromEntries(CRICKET_NUMS.map(n => [n, 0]));
         });
       }
       renderAll();
@@ -844,6 +919,7 @@
     const playersScroll = document.getElementById("playersScroll");
     const gameLabel = document.getElementById("gameLabel");
     const gameBtn = document.getElementById("gameBtn");
+    const phaseBadge = document.getElementById("phaseBadge");
     const togglesX01 = document.getElementById("togglesX01");
     const doubleInEl = document.getElementById("doubleIn");
     const doubleOutEl = document.getElementById("doubleOut");
@@ -903,16 +979,11 @@
     function openConfirm({title="Bevestigen", text="Weet je het zeker?", okText="OK", okKind="primary"}){
       confirmTitle.textContent = title;
       confirmText.textContent = text;
-
       confirmOk.textContent = okText;
       confirmOk.classList.remove("primary","danger");
       confirmOk.classList.add(okKind);
-
       showOverlay(overlayConfirm);
-
-      return new Promise((resolve)=>{
-        confirmResolve = resolve;
-      });
+      return new Promise((resolve)=>{ confirmResolve = resolve; });
     }
     function closeConfirm(){
       hideOverlay(overlayConfirm);
@@ -1031,7 +1102,7 @@
     function flashHint(msg){
       const old = hint.textContent;
       hint.textContent = msg;
-      setTimeout(()=>{ hint.textContent = old; }, 1400);
+      setTimeout(()=>{ hint.textContent = old; }, 1600);
     }
 
     function snapshot(){
@@ -1056,7 +1127,8 @@
           openedIn: state.turnStartSnapshot.openedIn,
           cricketScore: state.turnStartSnapshot.cricketScore,
           cricketMarks: {...state.turnStartSnapshot.cricketMarks}
-        } : null
+        } : null,
+        scram: cloneScramState()
       };
     }
 
@@ -1081,6 +1153,12 @@
         cricketScore: snap.turnStartSnapshot.cricketScore,
         cricketMarks: {...snap.turnStartSnapshot.cricketMarks}
       } : null;
+      state.scram = snap.scram ? {...snap.scram} : {
+        phase: 1,
+        targetScore: 0,
+        phase1ScorerIndex: 0,
+        phase1CloserIndex: 1
+      };
       renderAll();
     }
 
@@ -1089,20 +1167,75 @@
       if (state.history.length > 200) state.history.shift();
     }
 
+    function isScram(){
+      return state.game === "SCRAM";
+    }
+
+    function isCricketLike(){
+      return state.game === "CRICKET" || state.game === "SCRAM";
+    }
+
     function playerHasAllCricketClosed(player){
       return CRICKET_NUMS.every(n => (player.cricketMarks[n] || 0) >= 3);
     }
 
     function getCricketWinnerIndex(){
       if (state.players.length === 0) return -1;
-
       const maxScore = Math.max(...state.players.map(p => p.cricketScore));
       const candidates = state.players
         .map((p, i) => ({p, i}))
         .filter(x => x.p.cricketScore === maxScore && playerHasAllCricketClosed(x.p));
-
       if (candidates.length === 1) return candidates[0].i;
       return -1;
+    }
+
+    function getScramScorerIndex(){
+      if (state.scram.phase === 1) return state.scram.phase1ScorerIndex;
+      return state.scram.phase1CloserIndex;
+    }
+
+    function getScramCloserIndex(){
+      if (state.scram.phase === 1) return state.scram.phase1CloserIndex;
+      return state.scram.phase1ScorerIndex;
+    }
+
+    function isScramScorer(idx){
+      return isScram() && idx === getScramScorerIndex();
+    }
+
+    function isScramCloser(idx){
+      return isScram() && idx === getScramCloserIndex();
+    }
+
+    function getScramCloserPlayer(){
+      return state.players[getScramCloserIndex()];
+    }
+
+    function getScramScorerPlayer(){
+      return state.players[getScramScorerIndex()];
+    }
+
+    function scramAllClosed(){
+      const closer = getScramCloserPlayer();
+      if (!closer) return false;
+      return playerHasAllCricketClosed(closer);
+    }
+
+    function resetScramMarksOnly(){
+      state.players.forEach(p=>{
+        p.cricketMarks = Object.fromEntries(CRICKET_NUMS.map(n => [n, 0]));
+      });
+    }
+
+    function startScramPhase2(){
+      state.scram.targetScore = state.players[state.scram.phase1ScorerIndex]?.cricketScore || 0;
+      state.scram.phase = 2;
+      resetScramMarksOnly();
+      state.currentThrows = [];
+      state.currentPlayer = getScramScorerIndex();
+      saveTurnStartSnapshot();
+      renderAll();
+      showInfoPopup("FASE 2", `${state.players[getScramScorerIndex()].name} moet meer dan ${state.scram.targetScore} halen`);
     }
 
     function finishGameWithWinner(playerName){
@@ -1156,6 +1289,58 @@
 
         if (winnerIndex !== -1){
           finishGameWithWinner(state.players[winnerIndex].name);
+        }
+
+        return;
+      }
+
+      if (state.game === "SCRAM"){
+        if (num !== 0 && !CRICKET_NUMS.includes(num)) return;
+        if (num === 25 && mult === 3) mult = 2;
+
+        const label = (num===0) ? "0" : (mult===1 ? String(num) : (mult===2 ? ("D"+num) : ("T"+num)));
+        const hits = (num===0) ? 0 : mult;
+
+        const scorerIndex = getScramScorerIndex();
+        const closerIndex = getScramCloserIndex();
+        const scorer = state.players[scorerIndex];
+        const closer = state.players[closerIndex];
+
+        let deltaScore = 0;
+
+        if (num !== 0){
+          if (state.currentPlayer === scorerIndex){
+            const closerMarks = closer.cricketMarks[num] || 0;
+            const openHits = Math.max(0, 3 - closerMarks);
+            deltaScore = Math.min(hits, openHits) * num;
+            scorer.cricketScore += deltaScore;
+          } else if (state.currentPlayer === closerIndex){
+            const before = closer.cricketMarks[num] || 0;
+            closer.cricketMarks[num] = Math.min(3, before + hits);
+          }
+        }
+
+        state.currentThrows.push({ label, pointsDelta: deltaScore });
+        renderAll();
+
+        if (state.scram.phase === 1){
+          if (scramAllClosed()){
+            setTimeout(()=>{
+              if (!state.started) return;
+              startScramPhase2();
+            }, 500);
+          }
+          return;
+        }
+
+        if (scorer.cricketScore > state.scram.targetScore){
+          finishGameWithWinner(scorer.name);
+          return;
+        }
+
+        if (scramAllClosed()){
+          const phase1Winner = state.players[state.scram.phase1ScorerIndex];
+          finishGameWithWinner(phase1Winner.name);
         }
 
         return;
@@ -1226,8 +1411,15 @@
     function isClosedByPlayer(p, n){
       return (p.cricketMarks?.[n] || 0) >= 3;
     }
+
     function isAllClosed(n){
       if (state.players.length === 0) return false;
+
+      if (state.game === "SCRAM"){
+        const closer = getScramCloserPlayer();
+        return !!closer && isClosedByPlayer(closer, n);
+      }
+
       return state.players.every(p => isClosedByPlayer(p, n));
     }
 
@@ -1250,9 +1442,19 @@
       if (state.game === "CRICKET"){
         gameLabel.textContent = "Game: CRICKET";
         togglesX01.style.display = "none";
+      } else if (state.game === "SCRAM"){
+        gameLabel.textContent = "Game: SCRAM CRICKET";
+        togglesX01.style.display = "none";
       } else {
         gameLabel.textContent = "Game: " + state.game;
         togglesX01.style.display = "flex";
+      }
+
+      if (state.game === "SCRAM"){
+        phaseBadge.style.display = "inline-flex";
+        phaseBadge.textContent = `fase ${state.scram.phase}` + (state.scram.phase === 2 ? ` · target ${state.scram.targetScore}` : "");
+      } else {
+        phaseBadge.style.display = "none";
       }
 
       doubleInEl.checked = !!state.doubleIn;
@@ -1287,7 +1489,7 @@
 
       const allowEdit = !state.started;
 
-      if (state.game === "CRICKET"){
+      if (isCricketLike()){
         state.players.forEach((p, idx)=>{
           const row = document.createElement("div");
           row.className = "cricketRow" + (idx===state.currentPlayer ? " active" : "");
@@ -1305,6 +1507,21 @@
           name.className = "crName";
           name.textContent = p.name;
           left.appendChild(name);
+
+          if (state.game === "SCRAM" && state.players.length === 2){
+            const role = document.createElement("div");
+            if (isScramScorer(idx)){
+              role.className = "roleTag scorer";
+              role.textContent = "SCORER";
+            } else if (isScramCloser(idx)){
+              role.className = "roleTag closer";
+              role.textContent = "CLOSER";
+            } else {
+              role.className = "roleTag";
+              role.textContent = "";
+            }
+            left.appendChild(role);
+          }
 
           if (allowEdit){
             const rb = document.createElement("div");
@@ -1346,9 +1563,18 @@
             const cell = document.createElement("div");
             cell.className = "crNum";
 
-            const closed = isClosedByPlayer(p, n);
-            const allClosed = allClosedMap[n];
+            let closed = false;
+            if (state.game === "SCRAM"){
+              if (isScramCloser(idx)){
+                closed = isClosedByPlayer(p, n);
+              } else {
+                closed = false;
+              }
+            } else {
+              closed = isClosedByPlayer(p, n);
+            }
 
+            const allClosed = allClosedMap[n];
             if (allClosed) cell.classList.add("allClosed");
             else if (closed) cell.classList.add("closed");
 
@@ -1358,7 +1584,14 @@
 
             const dots = document.createElement("div");
             dots.className = "dots";
-            const filled = Math.min(3, p.cricketMarks[n] || 0);
+
+            let filled = 0;
+            if (state.game === "SCRAM"){
+              filled = isScramCloser(idx) ? Math.min(3, p.cricketMarks[n] || 0) : 0;
+            } else {
+              filled = Math.min(3, p.cricketMarks[n] || 0);
+            }
+
             for (let i=0;i<3;i++){
               const d = document.createElement("div");
               d.className = "dot" + (i<filled ? " filled" : "");
@@ -1372,7 +1605,14 @@
 
           const score = document.createElement("div");
           score.className = "crScore";
-          score.textContent = String(p.cricketScore);
+          score.innerHTML = `${p.cricketScore}`;
+
+          if (state.game === "SCRAM" && state.scram.phase === 2 && isScramScorer(idx)){
+            const tg = document.createElement("span");
+            tg.className = "crTarget";
+            tg.textContent = `target ${state.scram.targetScore}`;
+            score.appendChild(tg);
+          }
 
           row.appendChild(left);
           row.appendChild(marks);
@@ -1462,7 +1702,7 @@
     }
 
     function renderKeypadEnabled(){
-      const isCricket = (state.game === "CRICKET");
+      const isCricketMode = isCricketLike();
       const buttons = [...grid.querySelectorAll(".numBtn")];
 
       buttons.forEach(b=>{
@@ -1480,7 +1720,7 @@
           return;
         }
 
-        if (isCricket){
+        if (isCricketMode){
           if (CRICKET_NUMS.includes(n)) b.classList.remove("disabled");
           else b.classList.add("disabled");
         } else {
@@ -1494,15 +1734,33 @@
         hint.textContent = "Voeg spelers toe met +.";
         return;
       }
+
       if (!state.started){
+        if (state.game === "SCRAM"){
+          hint.textContent = "SCRAM CRICKET is voorzien voor 2 spelers. Fase 1: speler 1 scoort, speler 2 sluit. Daarna wisselen de rollen.";
+          return;
+        }
         hint.textContent = "Spel nog niet gestart: je kan spelers nog bewerken/verwijderen. Start met ▶.";
         return;
       }
+
       if (state.game === "CRICKET"){
         hint.textContent = "CRICKET: groen = jij hebt gesloten, rood = iedereen heeft gesloten. Win = alles dicht én hoogste score.";
-      } else {
-        hint.textContent = "X01: klik getal → D/T. Klik opnieuw op hetzelfde getal = single. X = miss (0). Bij bust vervalt de volledige beurt.";
+        return;
       }
+
+      if (state.game === "SCRAM"){
+        const scorer = getScramScorerPlayer();
+        const closer = getScramCloserPlayer();
+        if (state.scram.phase === 1){
+          hint.textContent = `SCRAM fase 1: ${scorer?.name || "Scorer"} maakt punten op open nummers. ${closer?.name || "Closer"} probeert alles te sluiten.`;
+        } else {
+          hint.textContent = `SCRAM fase 2: ${scorer?.name || "Scorer"} moet meer dan ${state.scram.targetScore} halen voordat ${closer?.name || "Closer"} alles sluit.`;
+        }
+        return;
+      }
+
+      hint.textContent = "X01: klik getal → D/T. Klik opnieuw op hetzelfde getal = single. X = miss (0). Bij bust vervalt de volledige beurt.";
     }
 
     function deletePlayer(idx){
@@ -1549,13 +1807,6 @@
 
       if (playerModalMode === "add"){
         const p = makePlayer(name);
-        if (state.game === "CRICKET"){
-          p.cricketScore = 0;
-          p.cricketMarks = Object.fromEntries(CRICKET_NUMS.map(n => [n, 0]));
-        } else {
-          p.scoreX01 = Number(state.game);
-          p.openedIn = false;
-        }
         state.players.push(p);
 
         if (state.players.length === 1){
@@ -1589,6 +1840,7 @@
         const g = el.dataset.game;
         hideOverlay(overlayGame);
         if (g === "CRICKET") resetForGame("CRICKET");
+        else if (g === "SCRAM") resetForGame("SCRAM");
         else resetForGame(Number(g));
       });
     });
@@ -1610,13 +1862,24 @@
           flashHint("Voeg eerst minstens 1 speler toe.");
           return;
         }
+
+        if (state.game === "SCRAM" && state.players.length !== 2){
+          flashHint("SCRAM CRICKET werkt in deze versie enkel met exact 2 spelers.");
+          return;
+        }
+
         state.started = true;
         state.history = [];
         state.currentThrows = [];
         state.turnIndex = 1;
         state.currentPlayer = 0;
+        resetScramState();
         saveTurnStartSnapshot();
         renderAll();
+
+        if (state.game === "SCRAM"){
+          showInfoPopup("SCRAM START", `${state.players[0].name} scoort · ${state.players[1].name} sluit`);
+        }
         return;
       }
 
@@ -1686,6 +1949,11 @@
       playTone(1046.5, 0.35, "triangle", 0.06, 0.38);
     }
 
+    function playInfoSound(){
+      playTone(392, 0.10, "triangle", 0.045, 0.00);
+      playTone(523.25, 0.12, "triangle", 0.045, 0.08);
+    }
+
     function showFx(title, sub, kind="win", autoHideMs=1400){
       fxTitle.textContent = title;
       fxSub.textContent = sub;
@@ -1708,6 +1976,11 @@
     function showWinPopup(playerName){
       playWinSound();
       showFx("WINNER!", playerName, "win", 2200);
+    }
+
+    function showInfoPopup(title, text){
+      playInfoSound();
+      showFx(title, text, "info", 1600);
     }
 
     resetForGame(501);
