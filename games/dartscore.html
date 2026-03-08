@@ -33,7 +33,6 @@
       justify-content:center;
     }
 
-    /* "Smalle band" wrapper */
     .shell{
       width:100%;
       max-width: 480px;
@@ -130,7 +129,6 @@
       flex-direction:column;
     }
 
-    /* Minimalistic scrollbar */
     .playersScroll{
       overflow:auto;
       -webkit-overflow-scrolling:touch;
@@ -171,7 +169,6 @@
       border-radius: 14px;
     }
 
-    /* Only active highlighted */
     .playerRow:not(.active),
     .cricketRow:not(.active){
       opacity:.55;
@@ -184,7 +181,6 @@
       filter:none;
     }
 
-    /* Pre-start icons */
     .rowBtns{
       display:flex;
       gap:8px;
@@ -222,7 +218,6 @@
       stroke-linejoin:round;
     }
 
-    /* Cricket layout */
     .crLeft{
       display:flex;
       flex-direction:column;
@@ -259,7 +254,6 @@
     }
     .crNum .n{ font-variant-numeric: tabular-nums; }
 
-    /* Closed highlighting */
     .crNum.closed .n{ color: rgba(42,214,109,.95); }
     .crNum.allClosed .n{ color: rgba(255,90,90,.95); }
 
@@ -297,7 +291,6 @@
       padding-top:2px;
     }
 
-    /* Fixed turn line */
     .turnLineWrap{
       padding: 8px 10px 10px;
       border-top:1px solid rgba(255,255,255,.06);
@@ -353,7 +346,6 @@
       position:relative;
     }
 
-    /* Keypad grid: 7 cols, 4 rows, X in row4 col7 */
     .grid{
       display:grid;
       grid-template-columns: repeat(7, 1fr);
@@ -391,7 +383,6 @@
       grid-row: 4 / 5;
     }
 
-    /* Popup D/T */
     .dtPop{
       position:absolute;
       display:none;
@@ -463,7 +454,6 @@
       transform: translateY(-1px);
     }
 
-    /* ===== Unified modal system for ALL popups ===== */
     .overlay{
       position:fixed;
       inset:0;
@@ -515,7 +505,6 @@
     }
     .mClose:active{ transform: translateY(1px); }
 
-    /* modal body blocks */
     .mBody{ padding: 14px; }
     .mText{
       color: rgba(233,240,246,.88);
@@ -545,7 +534,6 @@
       user-select:none;
     }
 
-    /* Form styling (player name) */
     .form{
       padding: 14px;
       display:flex;
@@ -598,6 +586,44 @@
     .btn.danger{
       background: rgba(255,90,90,.14);
       border-color: rgba(255,90,90,.18);
+    }
+
+    .fxOverlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.68);
+      z-index:500;
+      padding: 20px;
+    }
+    .fxOverlay.show{ display:flex; }
+
+    .fxCard{
+      min-width: min(360px, 100%);
+      max-width: 420px;
+      text-align:center;
+      background: rgba(10,18,26,.96);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      padding: 30px 24px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+    }
+    .fxTitle{
+      font-size: 38px;
+      font-weight: 1000;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .fxTitle.bust{ color: var(--danger); }
+    .fxTitle.win{ color: var(--accent); }
+    .fxSub{
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.2;
     }
   </style>
 </head>
@@ -707,7 +733,7 @@
     </div>
   </div>
 
-  <!-- Confirm dialog (used for stop/reset + delete) -->
+  <!-- Confirm dialog -->
   <div class="overlay" id="overlayConfirm">
     <div class="modal">
       <div class="mHead">
@@ -726,6 +752,14 @@
     </div>
   </div>
 
+  <!-- FX popup -->
+  <div class="fxOverlay" id="fxOverlay">
+    <div class="fxCard">
+      <div class="fxTitle" id="fxTitle"></div>
+      <div class="fxSub" id="fxSub"></div>
+    </div>
+  </div>
+
   <script>
     const NUM_ORDER = [25,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1];
     const CRICKET_NUMS = [25,20,19,18,17,16,15];
@@ -739,7 +773,8 @@
       turnIndex: 1,
       currentThrows: [],
       history: [],
-      started: false
+      started: false,
+      turnStartSnapshot: null
     };
 
     function makePlayer(name){
@@ -752,12 +787,39 @@
       };
     }
 
+    function clonePlayerState(p){
+      return {
+        scoreX01: p.scoreX01,
+        openedIn: p.openedIn,
+        cricketScore: p.cricketScore,
+        cricketMarks: {...p.cricketMarks}
+      };
+    }
+
+    function saveTurnStartSnapshot(){
+      if (!state.players.length || state.currentPlayer >= state.players.length){
+        state.turnStartSnapshot = null;
+        return;
+      }
+      state.turnStartSnapshot = clonePlayerState(state.players[state.currentPlayer]);
+    }
+
+    function restoreCurrentPlayerToTurnStart(){
+      if (!state.players.length || !state.turnStartSnapshot) return;
+      const p = state.players[state.currentPlayer];
+      p.scoreX01 = state.turnStartSnapshot.scoreX01;
+      p.openedIn = state.turnStartSnapshot.openedIn;
+      p.cricketScore = state.turnStartSnapshot.cricketScore;
+      p.cricketMarks = {...state.turnStartSnapshot.cricketMarks};
+    }
+
     function resetScoresForCurrentGame(){
       state.turnIndex = 1;
       state.currentPlayer = 0;
       state.currentThrows = [];
       state.history = [];
       state.started = false;
+      state.turnStartSnapshot = null;
 
       if (state.game === "CRICKET"){
         state.players.forEach(p=>{
@@ -779,7 +841,6 @@
       resetScoresForCurrentGame();
     }
 
-    /* DOM */
     const playersScroll = document.getElementById("playersScroll");
     const gameLabel = document.getElementById("gameLabel");
     const gameBtn = document.getElementById("gameBtn");
@@ -805,7 +866,6 @@
     const btnPlayStop = document.getElementById("btnPlayStop");
     const padEl = document.getElementById("pad");
 
-    /* Overlays */
     const overlayGame = document.getElementById("overlayGame");
     const overlayPlayer = document.getElementById("overlayPlayer");
     const overlayConfirm = document.getElementById("overlayConfirm");
@@ -820,11 +880,13 @@
     const confirmCancel = document.getElementById("confirmCancel");
     const confirmOk = document.getElementById("confirmOk");
 
-    /* Unified modal helpers */
+    const fxOverlay = document.getElementById("fxOverlay");
+    const fxTitle = document.getElementById("fxTitle");
+    const fxSub = document.getElementById("fxSub");
+
     function showOverlay(el){ el.classList.add("show"); }
     function hideOverlay(el){ el.classList.remove("show"); }
 
-    // close buttons
     document.querySelectorAll('[data-close]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const id = btn.getAttribute('data-close');
@@ -832,12 +894,11 @@
         if (el) hideOverlay(el);
       });
     });
-    // click outside closes (all overlays)
+
     [overlayGame, overlayPlayer, overlayConfirm].forEach(ov=>{
       ov.addEventListener("click", (e)=>{ if (e.target === ov) hideOverlay(ov); });
     });
 
-    /* Confirm dialog */
     let confirmResolve = null;
     function openConfirm({title="Bevestigen", text="Weet je het zeker?", okText="OK", okKind="primary"}){
       confirmTitle.textContent = title;
@@ -860,7 +921,6 @@
     confirmCancel.addEventListener("click", ()=>{ if (confirmResolve) confirmResolve(false); closeConfirm(); });
     confirmOk.addEventListener("click", ()=>{ if (confirmResolve) confirmResolve(true); closeConfirm(); });
 
-    /* Build keypad positions */
     function buildGrid(){
       grid.innerHTML = "";
       NUM_ORDER.forEach((n, idx)=>{
@@ -885,7 +945,6 @@
     }
     buildGrid();
 
-    /* D/T popup */
     let dtTarget = null;
     function hideDT(){
       dtPop.classList.remove("show");
@@ -975,7 +1034,6 @@
       setTimeout(()=>{ hint.textContent = old; }, 1400);
     }
 
-    /* History */
     function snapshot(){
       const players = state.players.map(p=>({
         name:p.name,
@@ -992,9 +1050,16 @@
         currentPlayer: state.currentPlayer,
         turnIndex: state.turnIndex,
         currentThrows: state.currentThrows.map(x=>({...x})),
-        started: state.started
+        started: state.started,
+        turnStartSnapshot: state.turnStartSnapshot ? {
+          scoreX01: state.turnStartSnapshot.scoreX01,
+          openedIn: state.turnStartSnapshot.openedIn,
+          cricketScore: state.turnStartSnapshot.cricketScore,
+          cricketMarks: {...state.turnStartSnapshot.cricketMarks}
+        } : null
       };
     }
+
     function restore(snap){
       state.game = snap.game;
       state.doubleIn = snap.doubleIn;
@@ -1010,14 +1075,44 @@
       state.turnIndex = snap.turnIndex;
       state.currentThrows = snap.currentThrows.map(x=>({...x}));
       state.started = !!snap.started;
+      state.turnStartSnapshot = snap.turnStartSnapshot ? {
+        scoreX01: snap.turnStartSnapshot.scoreX01,
+        openedIn: snap.turnStartSnapshot.openedIn,
+        cricketScore: snap.turnStartSnapshot.cricketScore,
+        cricketMarks: {...snap.turnStartSnapshot.cricketMarks}
+      } : null;
       renderAll();
     }
+
     function pushHistory(){
       state.history.push(snapshot());
       if (state.history.length > 200) state.history.shift();
     }
 
-    /* Scoring */
+    function playerHasAllCricketClosed(player){
+      return CRICKET_NUMS.every(n => (player.cricketMarks[n] || 0) >= 3);
+    }
+
+    function getCricketWinnerIndex(){
+      if (state.players.length === 0) return -1;
+
+      const maxScore = Math.max(...state.players.map(p => p.cricketScore));
+      const candidates = state.players
+        .map((p, i) => ({p, i}))
+        .filter(x => x.p.cricketScore === maxScore && playerHasAllCricketClosed(x.p));
+
+      if (candidates.length === 1) return candidates[0].i;
+      return -1;
+    }
+
+    function finishGameWithWinner(playerName){
+      state.started = false;
+      state.currentThrows = [];
+      hideDT();
+      renderAll();
+      showWinPopup(playerName);
+    }
+
     function applyThrow(num, mult){
       if (!state.started) return;
       if (state.players.length === 0) return;
@@ -1036,11 +1131,13 @@
         const hits = (num===0) ? 0 : mult;
 
         let deltaScore = 0;
+
         if (num !== 0){
           const before = player.cricketMarks[num] || 0;
           const afterRaw = before + hits;
 
           const oppNotClosed = state.players.some((p,idx)=> idx!==state.currentPlayer && (p.cricketMarks[num]||0) < 3);
+
           if (oppNotClosed){
             const beforeExtra = Math.max(0, before - 3);
             const afterExtra  = Math.max(0, afterRaw - 3);
@@ -1053,11 +1150,17 @@
         }
 
         state.currentThrows.push({ label, pointsDelta: deltaScore });
+
+        const winnerIndex = getCricketWinnerIndex();
         renderAll();
+
+        if (winnerIndex !== -1){
+          finishGameWithWinner(state.players[winnerIndex].name);
+        }
+
         return;
       }
 
-      // X01
       const label = (num===0) ? "0" : (mult===1 ? String(num) : (mult===2 ? ("D"+num) : ("T"+num)));
       const points = (num===0) ? 0 : (num * mult);
 
@@ -1084,27 +1187,42 @@
       }
 
       if (bust){
-        player.scoreX01 = beforeScore;
-        state.currentThrows.push({ label:"0", pointsDelta:0 });
-        endTurn();
+        restoreCurrentPlayerToTurnStart();
+        renderAll();
+        showBustPopup(player.name);
+
+        setTimeout(()=>{
+          if (!state.started) return;
+          endTurn();
+        }, 900);
         return;
-      } else {
-        player.scoreX01 = newScore;
       }
 
+      player.scoreX01 = newScore;
       state.currentThrows.push({ label, pointsDelta: appliedPoints });
       renderAll();
+
+      if (newScore === 0){
+        finishGameWithWinner(player.name);
+        return;
+      }
     }
 
     function endTurn(){
       state.currentThrows = [];
-      if (state.players.length === 0){ renderAll(); return; }
+
+      if (state.players.length === 0){
+        renderAll();
+        return;
+      }
+
       state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
       if (state.currentPlayer === 0) state.turnIndex += 1;
+
+      saveTurnStartSnapshot();
       renderAll();
     }
 
-    /* Cricket helpers */
     function isClosedByPlayer(p, n){
       return (p.cricketMarks?.[n] || 0) >= 3;
     }
@@ -1113,7 +1231,6 @@
       return state.players.every(p => isClosedByPlayer(p, n));
     }
 
-    /* Render helpers */
     function svgPencil(){
       return `
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -1174,7 +1291,12 @@
         state.players.forEach((p, idx)=>{
           const row = document.createElement("div");
           row.className = "cricketRow" + (idx===state.currentPlayer ? " active" : "");
-          row.addEventListener("click", ()=>{ state.currentPlayer = idx; renderAll(); });
+          row.addEventListener("click", ()=>{
+            if (!state.started) {
+              state.currentPlayer = idx;
+              renderAll();
+            }
+          });
 
           const left = document.createElement("div");
           left.className = "crLeft";
@@ -1260,11 +1382,15 @@
         return;
       }
 
-      // X01 (kept)
       state.players.forEach((p, idx)=>{
         const row = document.createElement("div");
         row.className = "playerRow" + (idx===state.currentPlayer ? " active" : "");
-        row.addEventListener("click", ()=>{ state.currentPlayer = idx; renderAll(); });
+        row.addEventListener("click", ()=>{
+          if (!state.started) {
+            state.currentPlayer = idx;
+            renderAll();
+          }
+        });
 
         const left = document.createElement("div");
         left.style.flex = "1";
@@ -1373,9 +1499,9 @@
         return;
       }
       if (state.game === "CRICKET"){
-        hint.textContent = "CRICKET: groen = jij hebt gesloten, rood = iedereen heeft gesloten. Klik getal → D/T (bij 25 enkel D).";
+        hint.textContent = "CRICKET: groen = jij hebt gesloten, rood = iedereen heeft gesloten. Win = alles dicht én hoogste score.";
       } else {
-        hint.textContent = "X01: klik getal → D/T. Klik opnieuw op hetzelfde getal = single. X = miss (0).";
+        hint.textContent = "X01: klik getal → D/T. Klik opnieuw op hetzelfde getal = single. X = miss (0). Bij bust vervalt de volledige beurt.";
       }
     }
 
@@ -1387,7 +1513,6 @@
       renderAll();
     }
 
-    /* Player modal (add/edit) */
     let playerModalMode = "add";
     let playerEditIndex = -1;
 
@@ -1449,7 +1574,6 @@
       setTimeout(()=>{ playersScroll.scrollTop = playersScroll.scrollHeight; }, 0);
     }
 
-    /* Game modal */
     function openGameModal(){
       if (state.started){
         flashHint("Stop/Reset eerst om van game te wisselen.");
@@ -1458,7 +1582,6 @@
       showOverlay(overlayGame);
     }
 
-    /* Events */
     gameBtn.addEventListener("click", openGameModal);
 
     document.querySelectorAll(".opt").forEach(el=>{
@@ -1481,7 +1604,6 @@
       if (e.key === "Escape") closePlayerModal();
     });
 
-    /* Play/Stop logic with unified confirm */
     btnPlayStop.addEventListener("click", async ()=>{
       if (!state.started){
         if (state.players.length === 0){
@@ -1493,6 +1615,7 @@
         state.currentThrows = [];
         state.turnIndex = 1;
         state.currentPlayer = 0;
+        saveTurnStartSnapshot();
         renderAll();
         return;
       }
@@ -1528,7 +1651,65 @@
       restore(snap);
     });
 
-    /* Init */
+    function playTone(freq=440, duration=0.12, type="sine", gain=0.05, delay=0){
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!window.__dartAudioCtx) window.__dartAudioCtx = new AudioCtx();
+      const ctx = window.__dartAudioCtx;
+
+      const now = ctx.currentTime + delay;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(gain, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    }
+
+    function playBustSound(){
+      playTone(220, 0.18, "sawtooth", 0.06, 0);
+      playTone(180, 0.20, "square",   0.05, 0.08);
+      playTone(140, 0.24, "triangle", 0.04, 0.16);
+    }
+
+    function playWinSound(){
+      playTone(523.25, 0.16, "triangle", 0.05, 0.00);
+      playTone(659.25, 0.16, "triangle", 0.05, 0.12);
+      playTone(783.99, 0.18, "triangle", 0.05, 0.24);
+      playTone(1046.5, 0.35, "triangle", 0.06, 0.38);
+    }
+
+    function showFx(title, sub, kind="win", autoHideMs=1400){
+      fxTitle.textContent = title;
+      fxSub.textContent = sub;
+      fxTitle.className = "fxTitle " + kind;
+      fxOverlay.classList.add("show");
+
+      if (autoHideMs > 0){
+        clearTimeout(showFx._timer);
+        showFx._timer = setTimeout(()=>{
+          fxOverlay.classList.remove("show");
+        }, autoHideMs);
+      }
+    }
+
+    function showBustPopup(playerName){
+      playBustSound();
+      showFx("BUST!", playerName, "bust", 900);
+    }
+
+    function showWinPopup(playerName){
+      playWinSound();
+      showFx("WINNER!", playerName, "win", 2200);
+    }
+
     resetForGame(501);
     state.doubleIn = false;
     state.doubleOut = true;
